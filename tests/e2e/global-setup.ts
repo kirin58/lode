@@ -22,3 +22,16 @@ export default function globalSetup() {
     console.warn('⚠️ seed ไม่สำเร็จ (จะใช้ข้อมูลที่มีอยู่):', err?.message?.split('\n')[0])
   }
 }
+
+/** เรียก route หลักไว้ก่อน ให้ Vite transform/pre-bundle เสร็จ (ลด flakiness ตอนเทสต์แรก) */
+export async function warmUp() {
+  const routes = ['/', '/browse', '/register', '/login', '/item/1']
+  for (const r of routes) {
+    try {
+      const res = await fetch(`http://localhost:5173${r}`)
+      await res.text()
+    } catch {
+      /* เว็บอาจยังไม่ขึ้น — ข้ามไป */
+    }
+  }
+}
