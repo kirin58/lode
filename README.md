@@ -229,18 +229,19 @@ npm run test   # unit + e2e ครบ
 - ได้ URL เช่น `https://lost-found-api.onrender.com`
 
 **2) Deploy client (Vue)** — Vercel / Netlify
-- build: `npm --prefix client run build`
-- output: `client/dist`
-- **environment variable**: `VITE_API_URL=https://lost-found-api.onrender.com`
-- rewrite ทุก path → `index.html` (history mode) เช่น Vercel ใส่ใน `vercel.json`:
 
-```json
-{
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "buildCommand": "npm --prefix client run build",
-  "outputDirectory": "client/dist"
-}
-```
+เลือกอย่างใดอย่างหนึ่ง (ทั้งสองแบบมี `vercel.json` เตรียมไว้ให้แล้ว):
+
+| ตั้งค่าใน Vercel | ค่าที่ต้องใส่ |
+| --- | --- |
+| **Root Directory = คลิกขีดออก (repo root)** ✅ แนะนำ | ไม่ต้องใส่อะไรเพิ่ม (ใช้ `vercel.json` ที่ root) |
+| **Root Directory = `client`** | ใช้ `client/vercel.json` อัตโนมัติ (build = `npm run build`, output = `dist`) |
+
+> ⚠️ **ต้องเป็นแบบเดียวกัน** — ถ้า Vercel อ่าน `vercel.json` ที่ root แต่ build command ถูกตั้งเป็น
+> `npm --prefix client run build` จะได้ `client/client/package.json` (ENOENT) แบบที่เจอ
+> แก้โดยลบ Build Command ออกจาก Settings เพื่อให้ Vercel ใช้ค่าใน `vercel.json` แทน
+
+- **Environment Variable**: `VITE_API_URL=https://lost-found-api.onrender.com` (บังคับถ้า API ไม่ได้อยู่โดเมนเดียวกัน)
 
 เซิร์ฟเวอร์เปิด CORS แบบ `origin: true` อยู่แล้ว จึงเรียกข้ามโดเมนได้เลย
 
