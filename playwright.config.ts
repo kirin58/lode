@@ -1,9 +1,14 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * E2E ทั้งระบบ: เปิด API (demo mode ไม่ต้องต่อ Neon) + Vite dev server
- * ใช้ `npm run test:e2e` ที่ root
+ * E2E ทั้งระบบ: เปิด API + Vite ให้เองอัตโนมัติ
+ *
+ * ค่าเริ่มต้น = รันกับ **demo mode** (in-memory) เพื่อให้เร็ว ผลลัพธ์นิ่ง และรันซ้ำได้ทุกครั้ง
+ * ถ้าอยากเทสกับ Neon จริง:  E2E_NEON=1 npx playwright test
  */
+const useNeon = process.env.E2E_NEON === '1'
+const apiEnv = useNeon ? {} : { DATABASE_URL: '' }
+
 export default defineConfig({
   testDir: './tests/e2e',
   globalSetup: './tests/e2e/global-setup.ts',
@@ -33,6 +38,7 @@ export default defineConfig({
       timeout: 60_000,
       stdout: 'ignore',
       stderr: 'pipe',
+      env: apiEnv,
     },
     {
       command: 'npm --prefix client run dev',

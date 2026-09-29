@@ -214,7 +214,7 @@ onMounted(() => {
           <input
             v-model="campus"
             type="text"
-            placeholder="เช่น มหาวิทยาลัยบูรพาา"
+            placeholder="เช่น มหาวิทยาลัยพะเยา"
             maxlength="80"
             class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
