@@ -134,7 +134,12 @@ onMounted(() => {
         </p>
       </div>
 
-      <form class="space-y-4" :class="shake ? 'animate-wiggle' : ''" @submit.prevent="submit">
+      <form
+        class="space-y-4"
+        :class="shake ? 'animate-wiggle' : ''"
+        novalidate
+        @submit.prevent="submit"
+      >
         <!-- avatar picker -->
         <div>
           <span class="mb-2.5 block text-xs font-bold text-muted-1">เลือกอวตารของคุณ</span>

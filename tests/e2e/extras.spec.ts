@@ -83,7 +83,7 @@ test.describe('🧑‍🎤 โปรไฟล์ + รีวิว', () => {
     const save = form.getByRole('button', { name: 'บันทึกการเปลี่ยนแปลง' })
     await expect(save).toBeDisabled() // ยังไม่มีอะไรเปลี่ยน
 
-    await form.getByRole('button', { name: '🦄' }).click({ force: true })
+    await form.getByRole('button', { name: '🍑' }).click()
     await typeInto(form.locator('input[type=text]').first(), 'ชื่อใหม่ E2E')
     await typeInto(form.locator('textarea'), 'ช่วยหาของเก่งมาก')
     await expect(save).toBeEnabled()

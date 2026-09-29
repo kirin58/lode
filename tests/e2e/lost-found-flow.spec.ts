@@ -48,7 +48,7 @@ test.describe('วงจรคืนของครบสาย (report → clai
     // ---------- ให้คะแนนกัน ----------
     await helper.reload()
     await helper.getByRole('button', { name: /ให้คะแนน/ }).click()
-    await helper.getByRole('button', { name: '5 ดาว' }).click()
+    await helper.getByRole('button', { name: '5 ดาว', exact: true }).first().click()
     await typeInto(helper.getByPlaceholder(/ฝากคำชม/), 'นัดเจอไวมาก ขอบคุณครับ')
     await helper.getByRole('button', { name: /ส่ง 5 ดาว/ }).click()
     await expect(helper.getByText('ขอบคุณสำหรับรีวิว!')).toBeVisible()

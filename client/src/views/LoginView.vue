@@ -71,7 +71,7 @@ onMounted(() => {
         </RouterLink>
       </p>
 
-      <form class="mt-8 space-y-4" :class="shake ? 'animate-wiggle' : ''" @submit.prevent="submit">
+      <form class="mt-8 space-y-4" :class="shake ? 'animate-wiggle' : ''" novalidate @submit.prevent="submit">
         <label class="block">
           <span class="mb-2 block text-xs font-bold text-muted-1">อีเมล</span>
           <input
