@@ -2,6 +2,7 @@ import { test, expect, registerAndLogin, typeInto } from './fixtures'
 
 test.describe('วงจรคืนของครบสาย (report → claim → approve → review)', () => {
   test('ลงประกาศ → อีกคนขอรับ → เจ้าของอนุมัติ → ให้คะแนน', async ({ browser }) => {
+    test.slow() // เทสต์นี้เปิด 2 context + สมัคร 2 บัญชี และเดินทั้งวงจร
     // ---------- เจ้าของ ----------
     const ownerCtx = await browser.newContext()
     const owner = await ownerCtx.newPage()

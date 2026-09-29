@@ -11,6 +11,7 @@
     "preview": "npm --prefix client run preview",
     "typecheck": "npm --prefix server run typecheck && npm --prefix client run typecheck",
     "db:push": "npm --prefix server run db:push",
+    "db:seed": "npm --prefix server run db:seed",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "npm --prefix server run test && npm --prefix client run test",
     "test:unit:watch": "npm --prefix client run test:watch",

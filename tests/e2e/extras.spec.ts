@@ -2,6 +2,7 @@ import { test, expect, registerAndLogin, login, typeInto, DEMO } from './fixture
 
 test.describe('⭐ Watchlist + แจ้งเตือนอัตโนมัติ', () => {
   test('ตั้ง watchlist แล้วได้รับแจ้งเตือนเมื่อมีประกาศตรงคำค้น', async ({ browser }) => {
+    test.slow() // เทสต์นี้เปิด 3 browser context + สมัคร 2 บัญชี
     // watcher
     const wCtx = await browser.newContext()
     const watcher = await wCtx.newPage()

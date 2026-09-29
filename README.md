@@ -108,7 +108,7 @@ npm run dev
 ```bash
 npm run typecheck      # tsc (server) + vue-tsc (client)
 npm run test:unit      # Vitest: 45 unit tests
-npm run test:e2e       # Playwright: 22 E2E tests (เปิด server ให้เองอัตโนมัติ)
+npm run test:e2e       # Playwright: 30 E2E tests (เปิด server ให้เองอัตโนมัติ)
 npm run test           # unit + e2e ทั้งหมด
 npm run build          # server (tsc) + client (vite)
 ```
@@ -147,7 +147,9 @@ npm run test:e2e:mobile    # เฉพาะ Pixel 7
 npm run test:e2e:report    # เปิด HTML report
 ```
 
-`playwright.config.ts` จะ**เปิด API + เว็บเองอัตโนมัติ** (`webServer`) และเรียก `db:seed` ก่อนเทสต์ เท่ากับ `demo@lostfound.app` / `joe@lostfound.app` (รหัส `demo1234`) ใช้ได้ทั้งกับ Neon และ demo mode
+`playwright.config.ts` จะ**เปิด API + เว็บเองอัตโนมัติ** (`webServer`) และปิด `DATABASE_URL` ให้ใช้ **demo mode** เพื่อให้ผลลัพธ์นิ่งและรันซ้ำได้ทุกครั้ง (บัญชี `demo@lostfound.app` / `joe@lostfound.app` รหัส `demo1234` ใช้ได้เลย)
+
+ถ้าอยากเทสกับ **Neon จริง**: `E2E_NEON=1 npx playwright test` (จะ seed ข้อมูลตัวอย่างลงฐานข้อมูลก่อน)
 
 | Spec | ครอบคลุม |
 | --- | --- |
@@ -156,6 +158,8 @@ npm run test:e2e:report    # เปิด HTML report
 | `lost-found-flow.spec.ts` | **วงจรเต็ม:** ลงประกาศ → คนขอรับ → เจ้าของอนุมัติ → แชทกัน → ให้คะแนน + จัดการสถานะ/ลบประกาศ |
 | `extras.spec.ts` | watchlist → ได้รับแจ้งเตือนอัตโนมัติ, หน้าแอดมิน + การป้องกันสิทธิ์, แก้โปรไฟล์ |
 | `api.spec.ts` | REST contract: health, categories/stats, 401/403, register→create→patch→delete, validation |
+
+> 💡 เคสที่เทสต์เจอ bug จริงระหว่างพัฒนา: ช่อง `type="email"` ทำให้เบราว์เซอร์บล็อกการส่งฟอร์มเมื่ออีเมลผิดรูปแบบ ข้อความ validation ภาษาไทยของเราจึงไม่แสดง → แก้ด้วยการใส่ `novalidate` ในฟอร์ม
 
 ---
 
@@ -197,10 +201,13 @@ npm run test   # unit + e2e ครบ
 
 ```
 .
-├── package.json              # concurrently: รันทั้ง API + WEB
+├── package.json              # concurrently: รันทั้ง API + WEB + สคริปต์ test ทั้งหมด
+├── playwright.config.ts      # E2E (chromium + mobile) + webServer
+├── .github/workflows/        # CI (ci.yml) + CD (cd.yml)
+├── tests/e2e/                # Playwright specs + fixtures + global-setup
 ├── server/
 │   ├── .env.example
-│   ├── sql/schema.sql        # DDL ทั้งหมด (users/items/categories/claims/notifications)
+│   ├── sql/schema.sql        # DDL ทั้งหมด (users/items/categories/claims/notifications/watches/reviews/messages)
 │   ├── uploads/              # รูปที่อัปโหลด (เสิร์ฟ static ที่ /uploads)
 │   └── src/
 │       ├── index.ts          # ตั้ง middleware + mount route
@@ -214,11 +221,14 @@ npm run test   # unit + e2e ครบ
 │       │   ├── index.ts      # เลือก driver (neon | memory)
 │       │   ├── store.neon.ts # SQL จริงทั้งหมด
 │       │   ├── store.memory.ts
-│       │   └── push.ts       # npm run db:push
+│       │   ├── store.test.ts # unit test ของ business logic
+│       │   ├── push.ts       # npm run db:push
+│       │   └── seed.ts       # npm run db:seed
 │       └── routes/
 │           ├── auth.routes.ts
 │           ├── items.routes.ts
-│           └── claims.routes.ts  # + notifyRouter
+│           ├── claims.routes.ts  # + notifyRouter
+│           └── extra.routes.ts   # watches / reviews / messages / admin
 └── client/
     └── src/
         ├── style.css         # Tailwind v4 theme, keyframes, utility
