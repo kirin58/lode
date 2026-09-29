@@ -3,6 +3,8 @@
 แอปแจ้งของหาย / ของเจอ สำหรับนักศึกษา สร้างด้วย **Vue 3 + TypeScript + Tailwind CSS v4** และเชื่อมฐานข้อมูล **Neon (PostgreSQL Serverless)**
 
 UI แนว Gen-Z: gradient สด ๆ, glassmorphism, ฟอนต์ Outfit + Noto Sans Thai, การ์ดมน ๆ, สติกเกอร์หมวดหมู่, toast และแอนิเมชันลอย ๆ
+พร้อม **ธีมมืด/สว่าง**, แชทเรียลไทม์, watchlist แจ้งเตือนอัตโนมัติ, ระบบรีวิว+คะแนนความน่าเชื่อถือ, แดชบอร์ดแอดมิน
+และมี **CI/CD + unit test (Vitest) + E2E (Playwright)** ครบ
 
 ---
 
@@ -13,10 +15,15 @@ UI แนว Gen-Z: gradient สด ๆ, glassmorphism, ฟอนต์ Outfit +
 | 🏠 หน้าแรก | Hero, ตัวเลขสถิติ (นับเลขขึ้น), 3 ขั้นตอน, หมวดหมู่, ประกาศล่าสุด, marquee เลื่อน |
 | 🔎 ค้นหาของ | ค้นหาข้อความ (debounce 350ms), กรอง LOST/FOUND, หมวด, สถานะ, เรียงล่าสุด/คนยอมจอย/รางวัล, URL sync, skeleton |
 | 📣 ลงประกาศ | สลับโหมดเจอแล้ว/ทำหาย, อัปโหลดรูป (preview, จำกัด 4MB), เลือกหมวด, ตั้งรางวัล, ติดต่อ |
-| 🙋 ขอรับของ | พิสูจน์ตัวตนด้วยรายละเอียดจุดสังเกต, กันขอซ้ำ, เจ้าของอนุมัติ/ปฏิเสธ, ปิดเคสอัตโนมัติ |
+| 🙋 ขอรับของ | พิสูจน์ตัวตนด้วยรายละเอียดจุดสังเกต, กันขอซ้ำ, เจ้าของอนุมัติ/ปฏิเสธ, ปิดเคสอัตโนมัติ, ป้ายความน่าเชื่อถือของเจ้าของ |
 | 🎒 พื้นที่ของฉัน | 3 แท็บ: ประกาศของฉัน (เปลี่ยนสถานะ/ลบ), คำขอเข้ามา, ที่ฉันไปขอ |
 | 🧑‍🎤 โปรไฟล์ | เลือกอวตารอีโมจิ, ชื่อ, คณะ, bio, ออกจากระบบ |
-| 🔔 การแจ้งเตือน | แจ้งเมื่อมีคนอ้างของ / คำขอถูกอนุมัติหรือปฏิเสธ |
+| 🔔 การแจ้งเตือน | แจ้งเมื่อมีคนอ้างของ / คำขอถูกอนุมัติหรือปฏิเสธ / มีแชทใหม่ / ได้รับรีวิว |
+| 🔔 ติดตาม (Watchlist) | ตั้งคำค้น/หมวด/ประเภทที่สนใจ แล้วระบบแจ้งทันทีที่มีประกาศตรงเงื่อนไข |
+| ⭐ รีวิว + คะแนน | ให้คะแนนหลังคืนของสำเร็จ (เฉพาะคู่ที่คืนกัน) → badge มือใหม่/คนน่าเชื่อถือ/ฮีโร่/ตำนาน |
+| 💬 แชท | คุยกันในประกาศ (เฉพาะเจ้าของ + คนที่ขอรับ) poll ทุก 3 วินาที |
+| 👑 สถิติทั้งระบบ | แอดมินดู KPI, กราฟ 14 วัน, หมวดยอดนิยม, ฮีโร่คืนของ, ประกาศล่าสุด |
+| 🌙☀️ ธีม | สลับโหมดมืด/สว่าง จำค่าไว้ใน localStorage |
 | 🔐 สมัครสมาชิก | เลือกอวตาร, ตัววัดความแข็งแรงรหัสผ่าน, validation, redirect กลับหน้าเดิม |
 | 🧭 เข้าสู่ระบบ | แสดง/ซ่อนรหัสผ่าน, ปุ่มบัญชีเดโม, ประกาศไฮไลต์ |
 | 404 | หน้าหายไปตามของที่หาย 😼 |
@@ -234,9 +241,9 @@ npm run test   # unit + e2e ครบ
         ├── style.css         # Tailwind v4 theme, keyframes, utility
         ├── types.ts          # type ฝั่ง client
         ├── lib/              # api.ts (fetch wrapper), format.ts (เวลาไทย/สถานะ)
-        ├── stores/           # auth, items, social, toast
-        ├── components/       # AppHeader, MobileTabBar, ItemCard, Toaster, ...
-        └── views/            # Landing, Home, ItemDetail, Report, MySpace, Profile, Login, Register, NotFound
+        ├── stores/           # auth, items, social, toast, extras (watchlist/chat/review), theme
+        ├── components/       # AppHeader, MobileTabBar, ItemCard, ChatPanel, ReviewModal, RepBadge, Toaster, ...
+        └── views/            # Landing, Home, ItemDetail, Report, MySpace, Watch, Admin, Profile, Login, Register, NotFound
 ```
 
 ---
@@ -262,25 +269,39 @@ npm run test   # unit + e2e ครบ
 | PATCH | `/api/claims/:id` | ✅ | อนุมัติ/ปฏิเสธ (เจ้าของประกาศ) |
 | GET | `/api/notifications` | ✅ | การแจ้งเตือน |
 | POST | `/api/notifications/read` | ✅ | ทำเครื่องหมายว่าอ่านแล้ว |
+| GET | `/api/watches` | ✅ | รายการติดตามของฉัน |
+| POST | `/api/watches` | ✅ | ติดตาม (คำค้น / หมวด / ประเภท) |
+| DELETE | `/api/watches/:id` | ✅ | เลิกติดตาม |
+| GET | `/api/reputation/:userId` | ✅ | คะแนนความน่าเชื่อถือ + รีวิวทั้งหมด |
+| POST | `/api/reviews` | ✅ | ให้คะแนน (เฉพาะคู่ที่คืนของสำเร็จ) |
+| GET | `/api/items/:itemId/messages` | ✅* | ดูแชท (*เฉพาะเจ้าของ + คนที่ขอรับ) |
+| POST | `/api/items/:itemId/messages` | ✅* | ส่งข้อความ |
+| GET | `/api/admin/overview` | 👑 | สถิติรวม + กราฟ + ฮีโร่ (แอดมิน) |
 | GET | `/api/health` | – | สถานะเซิร์ฟเวอร์ + driver ที่ใช้ |
 
 ---
 
 ## 🗄️ โครงสร้างฐานข้อมูล (Neon)
 
-- **users** — บัญชี (email unique, password_hash = bcrypt, role, points)
+- **users** — บัญชี (email unique, password_hash = bcrypt, role, points, bio)
 - **categories** — หมวดหมู่พร้อมอีโมจิ/สี
 - **items** — ประกาศ (`kind`: lost/found, `status`: open/claimed/returned/closed, reward, image_url)
 - **claims** — คำขอรับของ (`unique(item_id, claimant_id)` กันขอซ้ำ)
-- **notifications** — แจ้งเตือนในแอป
+- **notifications** — แจ้งเตือน (claim / approved / rejected / watch / chat / review)
+- **watches** — watchlist (คำค้น + หมวด + ประเภท, `unique` ต่อผู้ใช้)
+- **reviews** — รีวิวหลังคืนของสำเร็จ (คิด reputation + badge มือใหม่→คนน่าเชื่อถือ→ฮีโร่→ตำนาน)
+- **messages** — แชทในประกาศ (เห็นได้เฉพาะเจ้าของ + คนที่ขอรับ)
 
-มี index ครบทั้ง `created_at`, `kind`, `status`, `owner_id` และตาราง `claims`
+มี index ครบทั้ง `created_at`, `kind`, `status`, `owner_id`, `claimant_id`, `target_id` และตาราง `claims`
+
 
 ---
 
 ## 🧠 หมายเหตุ
 
-- **Demo mode**: ถ้าไม่ตั้ง `DATABASE_URL` เซิร์ฟเวอร์จะใช้ข้อมูลใน memory พร้อมข้อมูลตัวอย่าง 18 ประกาศ + บัญชีเดโม (รหัสผ่าน `demo1234`) ข้อมูลจะหายเมื่อรีสตาร์ท — ใช้ดู UI เท่านั้น
-- **รูปภาพ** เก็บเป็นไฟล์ใน `server/uploads/` เสิร์ฟที่ `/uploads/*` (ถ้าต้องการเก็บลง Neon Storage หรือ S3 ให้เปลี่ยน `src/upload.ts`)
+- **Demo mode**: ถ้าไม่ตั้ง `DATABASE_URL` เซิร์ฟเวอร์จะใช้ข้อมูลใน memory พร้อมข้อมูลตัวอย่าง 18 ประกาศ + บัญชีเดโม 8 คน (รหัสผ่าน `demo1234`) ข้อมูลจะหายเมื่อรีสตาร์ท — ใช้ดู UI เท่านั้น
+- **Neon**: ตั้ง `DATABASE_URL` ใน `server/.env` แล้วรัน `npm run db:push && npm run db:seed` เพื่อสร้างตาราง + ข้อมูลตัวอย่าง (idempotent รันซ้ำได้)
+- **รูปภาพ** เก็บเป็นไฟล์ใน `server/uploads/` เสิร์ฟที่ `/uploads/*` (ถ้าต้องการเก็บลง Neon S3 / S3 ให้เปลี่ยน `src/upload.ts` — มี credential ของ Neon S3 ใน `.env` ให้พร้อม)
 - **รหัสผ่าน** เก็บเป็น bcrypt hash, token เป็น JWT 7 วัน เก็บใน `localStorage`
-- ตัวเลขในหน้าแรกนับจาก `/api/items/stats` จริง (ถ้ายังไม่ต่อ DB จะเป็น 0)
+- ตัวเลขในหน้าแรกนับจาก `/api/items/stats` จริง
+

@@ -139,5 +139,13 @@ jobs:
           JWT_SECRET: ci-secret
         run: |
           npm --prefix server run start &
-          npx wait-on http://localhost:8787/api/health --timeout 30000
-          curl -s http://localhost:8787/api/items/stats
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8787/api/health; then
+              echo ""
+              curl -s http://localhost:8787/api/items/stats
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API ไม่ตอบสนองใน 60 วินาที"
+          exit 1

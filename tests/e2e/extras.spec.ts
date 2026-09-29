@@ -2,8 +2,8 @@ import { test, expect, registerAndLogin, login, typeInto, DEMO } from './fixture
 
 test.describe('⭐ Watchlist + แจ้งเตือนอัตโนมัติ', () => {
   test('ตั้ง watchlist แล้วได้รับแจ้งเตือนเมื่อมีประกาศตรงคำค้น', async ({ browser }) => {
-    test.slow() // เทสต์นี้เปิด 3 browser context + สมัคร 2 บัญชี
-    // watcher
+    test.slow() // เทสต์นี้เปิด 2 browser context + เดินหลายหน้า
+    // ---------- ผู้ติดตาม ----------
     const wCtx = await browser.newContext()
     const watcher = await wCtx.newPage()
     await registerAndLogin(watcher, 'คนติดตาม E2E')
@@ -13,18 +13,18 @@ test.describe('⭐ Watchlist + แจ้งเตือนอัตโนมั�
     await expect(watcher.getByText('ติดตามแล้ว!')).toBeVisible()
     await expect(watcher.getByText(/E2Eจับตา/)).toBeVisible()
 
-    // ประกาศที่ไม่ตรงคำค้น → ยังไม่ต้องแจ้ง
-    const noiseCtx = await browser.newContext()
-    const noise = await noiseCtx.newPage()
-    await registerAndLogin(noise, 'คนไม่ตรง E2E')
-    await noise.goto('/report?kind=found')
-    await typeInto(noise.getByPlaceholder(/เช่น AirPods Pro 2/), 'กระเป๋าไม่ตรงคำ E2E')
-    await noise.getByRole('button', { name: /ลงประกาศ “เจอแล้ว”/ }).click()
-    await noise.waitForURL('**/item/**')
-
-    // ประกาศที่ตรงคำค้น → ต้องแจ้ง
-    const owner = await wCtx.newPage()
+    // ---------- ประกาศที่ไม่ตรงคำค้น (โพสต์โดยคนอื่น) → ยังไม่ต้องแจ้ง ----------
+    const oCtx = await browser.newContext()
+    const owner = await oCtx.newPage()
     await login(owner, DEMO.admin.email, DEMO.admin.password)
+    await owner.goto('/report?kind=found')
+    await typeInto(owner.getByPlaceholder(/เช่น AirPods Pro 2/), 'กระเป๋าไม่ตรงคำ E2E')
+    await owner.getByRole('button', { name: /ลงประกาศ “เจอแล้ว”/ }).click()
+    await owner.waitForURL('**/item/**')
+    await watcher.reload()
+    await expect(watcher.getByText(/มีประกาศใหม่ที่คุณติดตาม/)).toHaveCount(0)
+
+    // ---------- ประกาศที่ตรงคำค้น → ต้องแจ้ง ----------
     await owner.goto('/report?kind=found')
     await typeInto(owner.getByPlaceholder(/เช่น AirPods Pro 2/), 'E2Eจับตา เจอแล้วนะ')
     await owner.getByRole('button', { name: /ลงประกาศ “เจอแล้ว”/ }).click()
@@ -42,7 +42,7 @@ test.describe('⭐ Watchlist + แจ้งเตือนอัตโนมั�
     await expect(watcher.getByText('ยังไม่ได้ติดตามอะไรเลย')).toBeVisible()
 
     await wCtx.close()
-    await noiseCtx.close()
+    await oCtx.close()
   })
 
   test('watchlist ต้องเลือกอย่างน้อยหนึ่งอย่าง', async ({ page }) => {
