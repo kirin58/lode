@@ -73,6 +73,62 @@ export interface NotificationRow {
   created_at: string
 }
 
+export interface Watch {
+  id: string
+  user_id: string
+  keyword: string
+  category_id: string | null
+  kind: ItemKind | null
+  active: boolean
+  created_at: string
+  category: Category | null
+}
+
+export interface Review {
+  id: string
+  reviewer_id: string
+  target_id: string
+  item_id: string | null
+  rating: number
+  comment: string
+  created_at: string
+}
+
+export interface ReviewWithMeta extends Review {
+  item: Pick<Item, 'id' | 'title'> | null
+  reviewer: Pick<User, 'id' | 'display_name' | 'avatar_emoji'> | null
+}
+
+export interface Message {
+  id: string
+  item_id: string
+  user_id: string
+  body: string
+  created_at: string
+  user: Pick<User, 'id' | 'display_name' | 'avatar_emoji'> | null
+}
+
+export interface Reputation {
+  user_id: string
+  avg_rating: number
+  reviews_count: number
+  points: number
+  helped_count: number
+  score: number
+  badge: 'newbie' | 'trusted' | 'hero' | 'legend'
+}
+
+export interface AdminOverview {
+  stats: Stats
+  top_users: (Pick<User, 'id' | 'display_name' | 'avatar_emoji' | 'campus' | 'points'> & {
+    reviews_count: number
+    avg_rating: number
+  })[]
+  recent_items: ItemWithMeta[]
+  category_breakdown: { id: string; label: string; emoji: string; color: string; count: number }[]
+  daily: { day: string; count: number }[]
+}
+
 export interface ListItemsQuery {
   q?: string
   kind?: ItemKind | 'all'
@@ -106,6 +162,7 @@ export interface Store {
     display_name: string
     avatar_emoji?: string
     campus?: string | null
+    role?: Role
   }): Promise<User>
   findUserByEmail(email: string): Promise<UserWithSecret | null>
   findUserById(id: string): Promise<User | null>
@@ -116,6 +173,7 @@ export interface Store {
   listItems(query: ListItemsQuery): Promise<{ items: ItemWithMeta[]; total: number }>
   getItem(id: string): Promise<ItemWithMeta | null>
   createItem(item: Omit<Item, 'id' | 'created_at' | 'status'>): Promise<ItemWithMeta>
+  notifyWatchers(item: Item): Promise<void>
   updateItem(
     id: string,
     patch: Partial<Pick<Item, 'title' | 'description' | 'category_id' | 'location' | 'occurred_at' | 'contact_line' | 'image_url' | 'reward' | 'status'>>,
@@ -130,4 +188,34 @@ export interface Store {
   listNotifications(userId: string): Promise<NotificationRow[]>
   markNotificationsRead(userId: string): Promise<void>
   stats(): Promise<Stats>
+
+  // ⭐ watchlist
+  listWatches(userId: string): Promise<Watch[]>
+  createWatch(input: {
+    user_id: string
+    keyword: string
+    category_id: string | null
+    kind: ItemKind | null
+  }): Promise<Watch>
+  deleteWatch(id: string, userId: string): Promise<boolean>
+
+  // ⭐ reviews / reputation
+  addReview(input: {
+    reviewer_id: string
+    target_id: string
+    item_id: string
+    rating: number
+    comment: string
+  }): Promise<Review | null>
+  listReviewsForUser(userId: string): Promise<ReviewWithMeta[]>
+  reputation(userId: string): Promise<Reputation>
+
+  // ⭐ chat
+  canAccessChat(itemId: string, userId: string): Promise<boolean>
+  listMessages(itemId: string): Promise<Message[]>
+  sendMessage(itemId: string, userId: string, body: string): Promise<Message | null>
+
+  // ⭐ admin
+  adminOverview(): Promise<AdminOverview>
 }
+

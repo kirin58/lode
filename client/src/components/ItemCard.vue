@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Item } from '@/types'
@@ -38,9 +38,7 @@ const emoji = computed(() => props.item.category?.emoji ?? '✨')
       >
         {{ emoji }}
       </span>
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/10 to-transparent"
-      />
+      <div class="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/10 to-transparent" />
 
       <!-- top badges -->
       <div class="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
@@ -60,7 +58,7 @@ const emoji = computed(() => props.item.category?.emoji ?? '✨')
 
       <!-- status -->
       <span
-        class="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-ink/70 px-2.5 py-1 text-[11px] font-semibold text-night-50 ring-1 ring-white/15 backdrop-blur-md"
+        class="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-ink/70 px-2.5 py-1 text-[11px] font-semibold text-title ring-1 ring-line backdrop-blur-md"
       >
         <span class="size-1.5 rounded-full" :class="status.dot" />
         {{ status.emoji }} {{ status.label }}
@@ -69,28 +67,28 @@ const emoji = computed(() => props.item.category?.emoji ?? '✨')
 
     <!-- body -->
     <div class="flex flex-1 flex-col gap-2.5 p-4">
-      <div class="flex items-center gap-2 text-[11px] text-night-300">
+      <div class="flex items-center gap-2 text-[11px] text-muted-2">
         <span class="rounded-full px-2 py-0.5 font-semibold ring-1" :class="catChip">
           {{ item.category?.emoji }} {{ item.category?.label ?? 'อื่น ๆ' }}
         </span>
         <span class="ml-auto shrink-0">{{ timeAgo(item.created_at) }}</span>
       </div>
 
-      <h3 class="line-clamp-2 font-display text-[15px] font-bold leading-snug text-white">
+      <h3 class="line-clamp-2 font-display text-[15px] font-bold leading-snug text-title">
         {{ item.title }}
       </h3>
 
-      <p class="line-clamp-1 flex items-center gap-1.5 text-xs text-night-300">
+      <p class="line-clamp-1 flex items-center gap-1.5 text-xs text-muted-2">
         <span>📍</span>{{ item.location || 'ไม่ระบุสถานที่' }}
       </p>
 
-      <div class="mt-auto flex items-center gap-2 border-t border-white/8 pt-3">
+      <div class="mt-auto flex items-center gap-2 border-t border-line pt-3">
         <span
-          class="grid size-7 shrink-0 place-items-center rounded-full bg-white/10 text-sm ring-1 ring-white/15"
+          class="grid size-7 shrink-0 place-items-center rounded-full bg-fill-2 text-sm ring-1 ring-line"
         >
           {{ item.owner?.avatar_emoji ?? '👤' }}
         </span>
-        <span class="truncate text-xs font-medium text-night-200">
+        <span class="truncate text-xs font-medium text-muted-1">
           {{ item.owner?.display_name ?? 'ไม่ระบุ' }}
         </span>
         <span

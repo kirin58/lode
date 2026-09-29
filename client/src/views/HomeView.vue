@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ItemCard from '@/components/ItemCard.vue'
@@ -98,7 +98,7 @@ onMounted(async () => {
     <div class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p
-          class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/6 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-night-200 ring-1 ring-white/10"
+          class="mb-3 inline-flex items-center gap-2 rounded-full bg-fill px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-1 ring-1 ring-line"
         >
           <span class="size-1.5 rounded-full bg-lime-pop animate-pulse" />
           ค้นหาของ
@@ -106,7 +106,7 @@ onMounted(async () => {
         <h1 class="font-display text-3xl font-black sm:text-5xl">
           มีอะไร <span class="text-gradient">หายอยู่</span> บ้าง?
         </h1>
-        <p class="mt-2 text-sm text-night-300">{{ resultText }} · อัปเดตล่าสุดแบบเรียลไทม์</p>
+        <p class="mt-2 text-sm text-muted-2">{{ resultText }} · อัปเดตล่าสุดแบบเรียลไทม์</p>
       </div>
 
       <!-- search -->
@@ -118,11 +118,11 @@ onMounted(async () => {
           v-model="q"
           type="search"
           placeholder="ค้นหาชื่อของ หรือสถานที่…"
-          class="w-full bg-transparent text-sm outline-none placeholder:text-night-400"
+          class="w-full bg-transparent text-sm outline-none placeholder:text-muted-3"
         />
         <button
           v-if="q"
-          class="text-night-400 transition hover:text-white"
+          class="text-muted-3 transition hover:text-title"
           aria-label="ล้างคำค้น"
           @click="q = ''"
         >
@@ -132,15 +132,17 @@ onMounted(async () => {
     </div>
 
     <!-- controls -->
-    <div class="sticky top-18 z-30 -mx-4 mb-6 space-y-3 border-b border-white/8 bg-ink/80 px-4 py-3 backdrop-blur-xl sm:mx-0 sm:rounded-3xl sm:border sm:px-4">
+    <div
+      class="sticky top-18 z-30 -mx-4 mb-6 space-y-3 border-b border-line bg-veil px-4 py-3 backdrop-blur-xl sm:mx-0 sm:rounded-3xl sm:border sm:px-4"
+    >
       <div class="flex flex-wrap items-center gap-2">
         <!-- kind -->
-        <div class="flex gap-1 rounded-2xl bg-white/6 p-1 ring-1 ring-white/10">
+        <div class="flex gap-1 rounded-2xl bg-fill-2 p-1 ring-1 ring-line">
           <button
             v-for="k in kinds"
             :key="k.id"
             class="rounded-xl px-3.5 py-2 text-xs font-extrabold transition sm:text-sm"
-            :class="store.filters.kind === k.id ? 'bg-white text-ink shadow' : 'text-night-200 hover:text-white'"
+            :class="store.filters.kind === k.id ? 'bg-title text-paper shadow' : 'text-muted-1 hover:text-title'"
             @click="store.setFilter('kind', k.id)"
           >
             {{ k.emoji }} {{ k.label }}
@@ -149,22 +151,22 @@ onMounted(async () => {
 
         <!-- status -->
         <select
-          class="rounded-2xl bg-white/6 px-3 py-2.5 text-xs font-bold text-night-100 ring-1 ring-white/10 outline-none transition hover:bg-white/12 sm:text-sm"
+          class="rounded-2xl bg-fill-2 px-3 py-2.5 text-xs font-bold text-muted-1 ring-1 ring-line outline-none transition hover:bg-fill-2 sm:text-sm"
           :value="store.filters.status"
           @change="store.setFilter('status', ($event.target as HTMLSelectElement).value as any)"
         >
-          <option v-for="s in statuses" :key="s.id" :value="s.id" class="bg-ink-soft">
+          <option v-for="s in statuses" :key="s.id" :value="s.id" class="bg-veil-strong">
             {{ s.label }}
           </option>
         </select>
 
         <!-- sort -->
-        <div class="ml-auto flex gap-1 rounded-2xl bg-white/6 p-1 ring-1 ring-white/10">
+        <div class="ml-auto flex gap-1 rounded-2xl bg-fill-2 p-1 ring-1 ring-line">
           <button
             v-for="s in sorts"
             :key="s.id"
             class="rounded-xl px-2.5 py-1.5 text-[11px] font-bold transition sm:px-3 sm:text-xs"
-            :class="store.filters.sort === s.id ? 'bg-white/15 text-white' : 'text-night-300 hover:text-white'"
+            :class="store.filters.sort === s.id ? 'bg-fill-2 text-title ring-1 ring-line' : 'text-muted-2 hover:text-title'"
             @click="store.setFilter('sort', s.id)"
           >
             {{ s.emoji }} {{ s.label }}
@@ -179,7 +181,7 @@ onMounted(async () => {
           :class="
             store.filters.category === 'all'
               ? 'bg-lime-pop text-ink ring-lime-pop'
-              : 'bg-white/6 text-night-200 ring-white/10 hover:bg-white/12'
+              : 'bg-fill text-muted-1 ring-line hover:bg-fill-2'
           "
           @click="store.setFilter('category', 'all')"
         >
@@ -191,8 +193,8 @@ onMounted(async () => {
           class="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold ring-1 transition"
           :class="
             store.filters.category === c.id
-              ? 'bg-white text-ink ring-white'
-              : 'bg-white/6 text-night-200 ring-white/10 hover:bg-white/12'
+              ? 'bg-title text-paper ring-line'
+              : 'bg-fill text-muted-1 ring-line hover:bg-fill-2'
           "
           @click="applyCategory(c.id)"
         >
@@ -203,7 +205,7 @@ onMounted(async () => {
 
     <!-- active filter chips -->
     <div v-if="activeChips.length" class="mb-5 flex flex-wrap items-center gap-2">
-      <span class="text-[11px] font-bold text-night-400">ตัวกรอง:</span>
+      <span class="text-[11px] font-bold text-muted-3">ตัวกรอง:</span>
       <span
         v-for="c in activeChips"
         :key="c"
@@ -212,7 +214,7 @@ onMounted(async () => {
         {{ c }}
       </span>
       <button
-        class="rounded-full bg-white/8 px-3 py-1 text-[11px] font-bold text-night-200 ring-1 ring-white/10 transition hover:bg-white/16"
+        class="rounded-full bg-fill-2 px-3 py-1 text-[11px] font-bold text-muted-1 ring-1 ring-line transition hover:bg-fill"
         @click="store.resetFilters(); q = ''"
       >
         ล้างทั้งหมด ✕
@@ -220,7 +222,10 @@ onMounted(async () => {
     </div>
 
     <!-- grid -->
-    <div v-if="store.loading && !store.items.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div
+      v-if="store.loading && !store.items.length"
+      class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    >
       <ItemSkeleton v-for="i in 8" :key="i" />
     </div>
 
@@ -240,7 +245,7 @@ onMounted(async () => {
       body="ลองเปลี่ยนคำค้น หรือกดล้างตัวกรอง แล้วลองใหม่อีกครั้งนะ"
     >
       <button
-        class="rounded-2xl bg-white px-5 py-2.5 text-sm font-extrabold text-ink transition hover:-translate-y-0.5"
+        class="rounded-2xl bg-title px-5 py-2.5 text-sm font-extrabold text-paper transition hover:-translate-y-0.5"
         @click="store.resetFilters()"
       >
         ล้างตัวกรองทั้งหมด

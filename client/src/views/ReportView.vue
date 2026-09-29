@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiError } from '@/lib/api'
@@ -105,7 +105,7 @@ onMounted(async () => {
   <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
     <div class="mb-8 text-center">
       <p
-        class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/6 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-night-200 ring-1 ring-white/10"
+        class="mb-3 inline-flex items-center gap-2 rounded-full bg-fill px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-1 ring-1 ring-line"
       >
         <span class="size-1.5 rounded-full bg-bubble-400 animate-pulse" />
         ลงประกาศฟรี
@@ -113,7 +113,7 @@ onMounted(async () => {
       <h1 class="font-display text-3xl font-black sm:text-5xl">
         เล่าเรื่องของของคุณ <span class="text-gradient-hot">เลย</span> ✍️
       </h1>
-      <p class="mt-2 text-sm text-night-300">ใช้เวลาไม่ถึงนาที แล้วเพื่อนจะช่วยกันหาให้</p>
+      <p class="mt-2 text-sm text-muted-2">ใช้เวลาไม่ถึงนาที แล้วเพื่อนจะช่วยกันหาให้</p>
     </div>
 
     <!-- kind switch -->
@@ -127,14 +127,14 @@ onMounted(async () => {
         class="rounded-3xl p-4 text-left ring-1 transition duration-300 hover:-translate-y-1"
         :class="
           kind === k.id
-            ? 'bg-gradient-to-br from-bubble-500/25 to-night-500/25 ring-white/25 shadow-glow'
-            : 'glass ring-white/8 hover:bg-white/10'
+            ? 'bg-gradient-to-br from-bubble-500/25 to-night-500/25 ring-line shadow-glow'
+            : 'glass ring-line hover:bg-fill-2'
         "
         @click="switchKind(k.id as ItemKind)"
       >
         <span class="text-2xl">{{ k.emoji }}</span>
         <p class="mt-1.5 font-display text-base font-extrabold">{{ k.label }}</p>
-        <p class="text-[11px] text-night-300">{{ k.desc }}</p>
+        <p class="text-[11px] text-muted-2">{{ k.desc }}</p>
       </button>
     </div>
 
@@ -151,12 +151,12 @@ onMounted(async () => {
           <span class="text-2xl">{{ hint.icon }}</span>
           <div>
             <p class="font-display text-sm font-extrabold">{{ hint.title }}</p>
-            <p class="text-xs text-night-300">{{ hint.body }}</p>
+            <p class="text-xs text-muted-2">{{ hint.body }}</p>
           </div>
         </div>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">
+          <span class="mb-2 block text-xs font-bold text-muted-1">
             ชื่อของ <span class="text-rose-400">*</span>
           </span>
           <input
@@ -164,26 +164,26 @@ onMounted(async () => {
             type="text"
             :placeholder="titlePlaceholder"
             maxlength="90"
-            class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
         </label>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">รายละเอียดเพิ่มเติม</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">รายละเอียดเพิ่มเติม</span>
           <textarea
             v-model="description"
             rows="4"
             maxlength="1200"
             placeholder="สี ตรา รอยขีด จุดที่เจอ หรืออะไรก็ได้ที่ช่วยให้จำได้ 💭"
-            class="w-full resize-none rounded-2xl bg-white/6 px-4 py-3.5 text-sm leading-relaxed outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full resize-none rounded-2xl bg-fill px-4 py-3.5 text-sm leading-relaxed outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
-          <span class="mt-1 block text-right text-[11px] text-night-400">
+          <span class="mt-1 block text-right text-[11px] text-muted-3">
             {{ description.length }}/1200
           </span>
         </label>
 
         <div>
-          <span class="mb-2 block text-xs font-bold text-night-200">หมวดหมู่</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">หมวดหมู่</span>
           <div class="grid grid-cols-3 gap-2 sm:grid-cols-5">
             <button
               v-for="c in store.categories"
@@ -192,8 +192,8 @@ onMounted(async () => {
               class="flex flex-col items-center gap-1 rounded-2xl px-2 py-3 text-[10px] font-bold ring-1 transition hover:-translate-y-0.5"
               :class="
                 category === c.id
-                  ? 'bg-white text-ink ring-white'
-                  : 'bg-white/5 text-night-200 ring-white/8 hover:bg-white/10'
+                  ? 'bg-title text-paper ring-line'
+                  : 'bg-fill text-muted-1 ring-line hover:bg-fill-2'
               "
               @click="category = category === c.id ? '' : c.id"
             >
@@ -205,38 +205,38 @@ onMounted(async () => {
 
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="block">
-            <span class="mb-2 block text-xs font-bold text-night-200">สถานที่</span>
+            <span class="mb-2 block text-xs font-bold text-muted-1">สถานที่</span>
             <input
               v-model="location"
               type="text"
               maxlength="120"
               placeholder="เช่น อาคาร A ชั้น 4 ห้อง A402"
-              class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+              class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
             />
           </label>
           <label class="block">
-            <span class="mb-2 block text-xs font-bold text-night-200">วันที่</span>
+            <span class="mb-2 block text-xs font-bold text-muted-1">วันที่</span>
             <input
               v-model="occurredAt"
               type="date"
-              class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm text-night-100 outline-none ring-1 ring-white/10 transition focus:ring-2 focus:ring-bubble-400/60"
+              class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm text-night-100 outline-none ring-1 ring-line transition focus:ring-2 focus:ring-bubble-400/60"
             />
           </label>
         </div>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">ช่องทางติดต่อ (ไลน์ / เบอร์)</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">ช่องทางติดต่อ (ไลน์ / เบอร์)</span>
           <input
             v-model="contact"
             type="text"
             maxlength="120"
             placeholder="@lineid หรือ 08x-xxx-xxxx"
-            class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
         </label>
 
         <div>
-          <span class="mb-2 block text-xs font-bold text-night-200">
+          <span class="mb-2 block text-xs font-bold text-muted-1">
             ให้รางวัลไหม? (ไม่บังคับ)
           </span>
           <div class="flex flex-wrap gap-2">
@@ -247,15 +247,15 @@ onMounted(async () => {
               class="rounded-2xl px-3.5 py-2 text-xs font-extrabold ring-1 transition hover:-translate-y-0.5"
               :class="
                 reward === r
-                  ? 'bg-lime-pop text-ink ring-lime-pop'
-                  : 'bg-white/5 text-night-200 ring-white/8 hover:bg-white/10'
+                  ? 'bg-lime-pop text-paper ring-lime-pop'
+                  : 'bg-fill text-muted-1 ring-line hover:bg-fill-2'
               "
               @click="reward = r"
             >
               {{ r === 0 ? 'ไม่ให้' : `฿${r}` }}
             </button>
           </div>
-          <p class="mt-2 text-[11px] text-night-400">
+          <p class="mt-2 text-[11px] text-muted-3">
             ประกาศที่มีรางวัล มักได้ของคืนเร็วกว่า ~3 เท่า 💎
           </p>
         </div>
@@ -264,22 +264,22 @@ onMounted(async () => {
       <!-- right: image + submit -->
       <div class="space-y-5">
         <div class="rounded-[2rem] glass p-6">
-          <span class="mb-3 block text-xs font-bold text-night-200">รูปของ (ถ้ามี)</span>
+          <span class="mb-3 block text-xs font-bold text-muted-1">รูปของ (ถ้ามี)</span>
           <div
             class="relative aspect-square overflow-hidden rounded-3xl ring-1"
-            :class="preview ? 'ring-white/15' : 'border-2 border-dashed border-white/12'"
+            :class="preview ? 'ring-line' : 'border-2 border-dashed border-white/12'"
           >
             <div v-if="preview" class="h-full w-full">
               <img :src="preview" alt="ตัวอย่างรูป" class="h-full w-full object-cover" />
             </div>
             <label
               v-else
-              class="absolute inset-0 grid cursor-pointer place-items-center text-center transition hover:bg-white/4"
+              class="absolute inset-0 grid cursor-pointer place-items-center text-center transition hover:bg-fill"
             >
               <div>
                 <div class="text-4xl">📸</div>
                 <p class="mt-2 text-sm font-bold">กดเพื่ออัปโหลด</p>
-                <p class="text-[11px] text-night-400">รองรับ JPG/PNG ไม่เกิน 4 MB</p>
+                <p class="text-[11px] text-muted-3">รองรับ JPG/PNG ไม่เกิน 4 MB</p>
               </div>
             </label>
             <input
@@ -291,13 +291,13 @@ onMounted(async () => {
             <button
               v-if="preview"
               type="button"
-              class="absolute right-3 top-3 grid size-9 place-items-center rounded-2xl bg-ink/80 text-sm ring-1 ring-white/15 backdrop-blur transition hover:bg-ink"
+              class="absolute right-3 top-3 grid size-9 place-items-center rounded-2xl bg-veil text-sm ring-1 ring-line backdrop-blur transition hover:bg-ink"
               @click="file = null; preview = null"
             >
               ✕
             </button>
           </div>
-          <p class="mt-2 text-[11px] leading-relaxed text-night-400">
+          <p class="mt-2 text-[11px] leading-relaxed text-muted-3">
             💡 ประกาศที่มีรูป มักได้รับคำขอเข้ามามากกว่า 5 เท่า
           </p>
         </div>
@@ -313,7 +313,7 @@ onMounted(async () => {
           >
             {{ submitting ? 'กำลังบันทึก…' : kind === 'found' ? '🫶 ลงประกาศ “เจอแล้ว”' : '🙋 โพสต์ “ทำของหาย”' }}
           </button>
-          <p class="mt-3 text-center text-[11px] leading-relaxed text-night-400">
+          <p class="mt-3 text-center text-[11px] leading-relaxed text-muted-3">
             โพสต์แล้วทุกคนจะเห็นทันที · แก้ไขหรือลบได้ทุกเมื่อจาก “พื้นที่ของฉัน”
           </p>
         </div>

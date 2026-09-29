@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # ไม่ใส่ DATABASE_URL ใน CI → เซิร์ฟเวอร์จะใช้ demo mode (memory)
+  NODE_VERSION: '22'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1) ตรวจคุณภาพโค้ด: typecheck ทั้ง server และ client
+  # ─────────────────────────────────────────────
+  typecheck:
+    name: 🔍 Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install (root)
+        run: npm ci
+      - name: Install (server + client)
+        run: |
+          npm --prefix server ci
+          npm --prefix client ci
+      - name: Typecheck server
+        run: npm --prefix server run typecheck
+      - name: Typecheck client
+        run: npm --prefix client run typecheck
+
+  # ─────────────────────────────────────────────
+  # 2) Unit tests (Vitest)
+  # ─────────────────────────────────────────────
+  unit-test:
+    name: 🧪 Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm --prefix server ci
+      - run: npm --prefix client ci
+      - name: Server unit tests
+        run: npm --prefix server run test
+      - name: Client unit tests
+        run: npm --prefix client run test
+
+  # ─────────────────────────────────────────────
+  # 3) Build ทั้งสองฝั่ง
+  # ─────────────────────────────────────────────
+  build:
+    name: 📦 Build
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm --prefix server ci
+      - run: npm --prefix client ci
+      - name: Build server + client
+        run: npm run build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            client/dist
+            server/dist
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
+  # 4) E2E (Playwright) — เปิดทั้ง API และเว็บเอง
+  # ─────────────────────────────────────────────
+  e2e:
+    name: 🎭 E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [unit-test]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm --prefix server ci
+      - run: npm --prefix client ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E
+        run: npm run test:e2e
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
+  # 5) ตรวจว่า schema ใช้กับ Neon ได้จริง (ถ้ามี secret)
+  # ─────────────────────────────────────────────
+  neon-schema-check:
+    name: 🟣 Neon schema check
+    runs-on: ubuntu-latest
+    if: ${{ secrets.DATABASE_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm --prefix server ci
+      - name: Apply schema to Neon (dry branch)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm --prefix server run db:push
+      - name: Health check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ci-secret
+        run: |
+          npm --prefix server run start &
+          npx wait-on http://localhost:8787/api/health --timeout 30000
+          curl -s http://localhost:8787/api/items/stats

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { useToastStore } from '@/stores/toast'
 
 const toast = useToastStore()
@@ -22,20 +22,20 @@ const tone: Record<string, string> = {
         <button
           v-for="t in toast.toasts"
           :key="t.id"
-          class="pointer-events-auto flex w-full items-start gap-3 rounded-3xl bg-ink-soft/90 p-3.5 text-left shadow-lift ring-1 backdrop-blur-2xl transition hover:-translate-y-0.5"
+          class="pointer-events-auto flex w-full items-start gap-3 rounded-3xl bg-veil-strong p-3.5 text-left shadow-lift ring-1 backdrop-blur-2xl transition hover:-translate-y-0.5"
           :class="tone[t.tone]"
           @click="toast.dismiss(t.id)"
         >
-          <span class="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/10 text-lg">
+          <span class="grid size-10 shrink-0 place-items-center rounded-2xl bg-fill-2 text-lg">
             {{ t.emoji }}
           </span>
           <span class="min-w-0 flex-1">
             <span class="block font-display text-sm font-bold leading-snug">{{ t.title }}</span>
-            <span v-if="t.body" class="mt-0.5 block text-xs leading-relaxed text-night-200">
+            <span v-if="t.body" class="mt-0.5 block text-xs leading-relaxed text-muted-1">
               {{ t.body }}
             </span>
           </span>
-          <span class="mt-0.5 text-night-400">✕</span>
+          <span class="mt-0.5 text-muted-3">✕</span>
         </button>
       </TransitionGroup>
     </div>

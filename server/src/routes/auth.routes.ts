@@ -32,15 +32,18 @@ authRouter.post('/register', async (req, res) => {
     res.status(409).json({ error: 'อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบดิ 💅' })
     return
   }
+  // 👑 บัญชีแรกของระบบจะได้เป็นแอดมินอัตโนมัติ
+  const isFirstUser = (await store.stats()).members === 0
   const user = await store.createUser({
     email: email.toLowerCase(),
     password_hash: await bcrypt.hash(password, 10),
     display_name,
     avatar_emoji,
     campus: campus || null,
+    role: isFirstUser ? 'admin' : 'user',
   })
   const token = signToken({ sub: user.id, email: user.email, role: user.role })
-  res.status(201).json({ token, user: publicUser(user) })
+  res.status(201).json({ token, user: publicUser(user), is_first: isFirstUser })
 })
 
 authRouter.post('/login', async (req, res) => {

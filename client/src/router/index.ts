@@ -46,6 +46,18 @@ const router = createRouter({
       meta: { title: 'โปรไฟล์ · Lost & Found', requiresAuth: true },
     },
     {
+      path: '/watch',
+      name: 'watch',
+      component: () => import('@/views/WatchView.vue'),
+      meta: { title: 'ติดตามสิ่งที่สนใจ · Lost & Found', requiresAuth: true },
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/AdminView.vue'),
+      meta: { title: 'สถิติทั้งระบบ · Lost & Found', requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),

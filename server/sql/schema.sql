@@ -69,3 +69,51 @@ create table if not exists notifications (
 );
 
 create index if not exists notifications_user_idx on notifications (user_id, created_at desc);
+
+-- =========================================================
+--  ⭐ WATCHLIST — ติดตามคำค้น/หมวดที่สนใจ แล้วให้ระบบแจ้งเตือน
+-- =========================================================
+create table if not exists watches (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references users (id) on delete cascade,
+  keyword     text not null default '',
+  category_id text references categories (id) on delete cascade,
+  kind        text check (kind in ('lost', 'found')),
+  active      boolean not null default true,
+  created_at  timestamptz not null default now(),
+  unique (user_id, keyword, category_id, kind)
+);
+
+create index if not exists watches_user_idx on watches (user_id, created_at desc);
+
+-- =========================================================
+--  ⭐ REVIEWS — รีวิวหลังคืนของสำเร็จ ใช้คิดคะแนนความน่าเชื่อถือ
+-- =========================================================
+create table if not exists reviews (
+  id          uuid primary key default gen_random_uuid(),
+  reviewer_id uuid not null references users (id) on delete cascade,
+  target_id   uuid not null references users (id) on delete cascade,
+  item_id     uuid references items (id) on delete set null,
+  rating      integer not null check (rating between 1 and 5),
+  comment     text not null default '',
+  created_at  timestamptz not null default now(),
+  unique (item_id, reviewer_id)
+);
+
+create index if not exists reviews_target_idx on reviews (target_id);
+create index if not exists reviews_item_idx on reviews (item_id);
+
+-- =========================================================
+--  💬 MESSAGES — แชทในประกาศ (เฉพาะเจ้าของ + คนที่ขอรับของ)
+-- =========================================================
+create table if not exists messages (
+  id         uuid primary key default gen_random_uuid(),
+  item_id    uuid not null references items (id) on delete cascade,
+  user_id    uuid not null references users (id) on delete cascade,
+  body       text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists messages_item_idx on messages (item_id, created_at);
+
+-- บัญชีคนแรกของระบบจะได้เป็นแอดมินอัตโนมัติ (ดู src/routes/auth.routes.ts)

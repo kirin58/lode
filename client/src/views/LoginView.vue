@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { ApiError } from '@/lib/api'
@@ -57,14 +57,14 @@ onMounted(() => {
     <!-- form panel -->
     <div class="order-2 rounded-[2.5rem] glass-strong p-6 sm:p-10 lg:order-1">
       <span
-        class="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 text-xs font-bold ring-1 ring-white/15"
+        class="inline-flex items-center gap-2 rounded-full bg-fill-2 px-3 py-1.5 text-xs font-bold ring-1 ring-line"
       >
         👋 ยินดีต้อนรับกลับ
       </span>
       <h1 class="mt-5 font-display text-3xl font-black sm:text-4xl">
         เข้าสู่ระบบ <span class="text-gradient-hot">Lost&Found</span>
       </h1>
-      <p class="mt-2 text-sm text-night-300">
+      <p class="mt-2 text-sm text-muted-2">
         ยังไม่มีบัญชี?
         <RouterLink to="/register" class="font-bold text-lime-pop hover:underline">
           สมัครฟรี 20 วินาที
@@ -73,29 +73,29 @@ onMounted(() => {
 
       <form class="mt-8 space-y-4" :class="shake ? 'animate-wiggle' : ''" @submit.prevent="submit">
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">อีเมล</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">อีเมล</span>
           <input
             v-model="email"
             type="email"
             placeholder="you@campus.ac.th"
             autocomplete="email"
-            class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
         </label>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">รหัสผ่าน</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">รหัสผ่าน</span>
           <div class="relative">
             <input
               v-model="password"
               :type="show ? 'text' : 'password'"
               placeholder="••••••••"
               autocomplete="current-password"
-              class="w-full rounded-2xl bg-white/6 px-4 py-3.5 pr-12 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+              class="w-full rounded-2xl bg-fill px-4 py-3.5 pr-12 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
             />
             <button
               type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-night-400 transition hover:text-white"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-muted-3 transition hover:text-title"
               :aria-label="show ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
               @click="show = !show"
             >
@@ -120,14 +120,14 @@ onMounted(() => {
         </button>
 
         <div class="flex items-center gap-3 pt-1">
-          <span class="h-px flex-1 bg-white/10" />
-          <span class="text-[11px] font-bold text-night-500">หรือ</span>
-          <span class="h-px flex-1 bg-white/10" />
+          <span class="h-px flex-1 bg-fill-2" />
+          <span class="text-[11px] font-bold text-title0">หรือ</span>
+          <span class="h-px flex-1 bg-fill-2" />
         </div>
 
         <button
           type="button"
-          class="w-full rounded-2xl bg-white/8 px-5 py-3.5 text-sm font-bold ring-1 ring-white/10 transition hover:bg-white/14"
+          class="w-full rounded-2xl bg-fill-2 px-5 py-3.5 text-sm font-bold ring-1 ring-line transition hover:bg-fill-2"
           @click="useDemo"
         >
           🧪 ใช้บัญชีเดโม (คลิกเพื่อกรอกให้)
@@ -151,15 +151,15 @@ onMounted(() => {
           <div
             v-for="(h, i) in highlights"
             :key="h.title"
-            class="flex items-center gap-3 rounded-2xl bg-white/5 p-4 ring-1 ring-white/8 transition hover:-translate-y-1 hover:bg-white/8"
+            class="flex items-center gap-3 rounded-2xl bg-fill p-4 ring-1 ring-line transition hover:-translate-y-1 hover:bg-fill-2"
             :style="{ animation: `rise .5s ${i * 120}ms both` }"
           >
-            <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/8 text-xl">
+            <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-fill-2 text-xl">
               {{ h.emoji }}
             </span>
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-bold">{{ h.title }}</p>
-              <p class="text-[11px] text-night-300">{{ h.status }}</p>
+              <p class="text-[11px] text-muted-2">{{ h.status }}</p>
             </div>
             <span
               class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold"
@@ -176,7 +176,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <p class="mt-8 text-xs leading-relaxed text-night-400">
+        <p class="mt-8 text-xs leading-relaxed text-muted-3">
           💜 ทุกชิ้นที่กลับคืนคือหนึ่งคนที่ได้เดินกลับบ้านสบาย ๆ เหมือนกัน
         </p>
       </div>

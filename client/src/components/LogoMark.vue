@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 const props = withDefaults(
   defineProps<{
     emoji?: string
@@ -16,7 +16,7 @@ const props = withDefaults(
 <template>
   <div class="flex items-center gap-2.5">
     <span
-      class="relative grid size-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-lg shadow-glow ring-1 ring-white/20"
+      class="relative grid size-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-lg shadow-glow ring-1 ring-line"
       :class="[props.from, props.to]"
     >
       <span class="relative z-10">🔍</span>
@@ -29,7 +29,7 @@ const props = withDefaults(
       <span class="font-display text-lg font-extrabold tracking-tight">
         Lost<span class="text-gradient-hot">&amp;Found</span>
       </span>
-      <span class="mt-0.5 text-[10px] font-medium uppercase tracking-[0.22em] text-night-300">
+      <span class="mt-0.5 text-[10px] font-medium uppercase tracking-[0.22em] text-muted-2">
         bru lost &amp; found
       </span>
     </span>

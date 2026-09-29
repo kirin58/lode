@@ -14,7 +14,7 @@ if (!url) {
 }
 
 const schema = await readFile(
-  fileURLToPath(new URL('../sql/schema.sql', import.meta.url)),
+  fileURLToPath(new URL('../../sql/schema.sql', import.meta.url)),
   'utf8'
 )
 

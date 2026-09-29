@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -30,7 +30,7 @@ function isActive(to: string) {
 
 <template>
   <nav
-    class="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-ink/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl sm:hidden"
+    class="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-veil pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl sm:hidden"
   >
     <div class="grid grid-cols-4">
       <RouterLink
@@ -38,11 +38,11 @@ function isActive(to: string) {
         :key="t.to"
         :to="t.to"
         class="relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold transition"
-        :class="isActive(t.to) ? 'text-white' : 'text-night-400'"
+        :class="isActive(t.to) ? 'text-title' : 'text-muted-3'"
       >
         <span
           v-if="i === 2"
-          class="absolute -top-4 grid size-14 place-items-center rounded-3xl bg-gradient-to-br from-bubble-500 via-night-500 to-night-600 text-2xl shadow-glow ring-2 ring-ink"
+          class="absolute -top-4 grid size-14 place-items-center rounded-3xl bg-gradient-to-br from-bubble-500 via-night-500 to-night-600 text-2xl shadow-glow ring-2 ring-page"
         >
           {{ t.emoji }}
         </span>

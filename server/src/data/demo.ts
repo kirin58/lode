@@ -37,6 +37,8 @@ export const DEMO_USERS: UserWithSecret[] = [
   user('ป้อม', '🧢', 'วิทยาลัยเทคนิคฯ', 'pom@lostfound.app', 'user', 30),
   user('เอิร์ธ', '🌍', 'มหาวิทยาลัยบูรพา', 'earth@lostfound.app', 'user', 21),
   user('ซา', '🫧', 'มหาวิทยาลัยบูรพา', 'sa@lostfound.app', 'user', 12),
+  // บัญชีสำหรับทดสอบ E2E / ลองเล่น (เพิ่มท้ายสุดเพื่อไม่ให้ owner_index ใน DEMO_ITEMS เปลี่ยน)
+  user('ผู้ใช้เดโม 🧪', '🧪', 'มหาวิทยาลัยบูรพา', 'demo@lostfound.app', 'user', 0),
 ]
 
 export interface DemoItem {
@@ -50,6 +52,7 @@ export interface DemoItem {
   reward: number
   status: 'open' | 'claimed' | 'returned' | 'closed'
   owner_index: number
+  display_name?: string
 }
 
 const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10)

@@ -1,5 +1,7 @@
 import type {
+  AdminOverview,
   Category,
+  Claim,
   ClaimStatus,
   Item,
   ItemWithMeta,
@@ -69,7 +71,9 @@ export function createNeonStore(url: string): Store {
 
   async function all<T = Row>(text: string, params: any[] = []): Promise<T[]> {
     const res = (await sql.query(text, params)) as any
-    return (res.rows ?? []) as T[]
+    // @neondatabase/serverless v1.1 คืน array ตรง ๆ, เวอร์ชันเก่าคืน { rows }
+    if (Array.isArray(res)) return res as T[]
+    return (res?.rows ?? []) as T[]
   }
 
   async function one<T = Row>(text: string, params: any[] = []): Promise<T | null> {
@@ -97,8 +101,8 @@ export function createNeonStore(url: string): Store {
 
     async createUser(input) {
       const rows = await all<Row>(
-        `insert into users (email, password_hash, display_name, avatar_emoji, campus)
-         values ($1, $2, $3, $4, $5)
+        `insert into users (email, password_hash, display_name, avatar_emoji, campus, role, points)
+         values ($1, $2, $3, $4, $5, $6, $7)
          returning *`,
         [
           input.email,
@@ -106,6 +110,8 @@ export function createNeonStore(url: string): Store {
           input.display_name,
           input.avatar_emoji ?? '🫥',
           input.campus ?? null,
+          input.role ?? 'user',
+          input.role === 'admin' ? 100 : 0,
         ]
       )
       return rows[0] as User
@@ -197,7 +203,9 @@ export function createNeonStore(url: string): Store {
           input.owner_id,
         ]
       )
-      return (await this.getItem(row!.id))!
+      const created = (await this.getItem(row!.id))!
+      await this.notifyWatchers(created)
+      return created
     },
 
     async updateItem(id, patch, ownerId) {
@@ -231,6 +239,30 @@ export function createNeonStore(url: string): Store {
       return this.getItem(id)
     },
 
+    // ⭐ แจ้งเตือนคนที่ตั้ง watchlist ไว้ทันทีที่มีประกาศใหม่ตรงเงื่อนไข
+    async notifyWatchers(item: Item) {
+      const watchers = await all<Row>(
+        `select user_id, keyword from watches
+         where active
+           and user_id <> $1
+           and (kind is null or kind = $2)
+           and (category_id is null or category_id = $3)
+           and (keyword = '' or $4 ilike '%' || keyword || '%' or $5 ilike '%' || keyword || '%')
+         limit 50`,
+        [item.owner_id, item.kind, item.category_id, item.title, item.location]
+      )
+      for (const w of watchers) {
+        await sql.query(
+          `insert into notifications (user_id, item_id, kind, message) values ($1,$2,'watch',$3)`,
+          [
+            w.user_id,
+            item.id,
+            `มีประกาศใหม่ที่คุณติดตาม: “${item.title}”`,
+          ]
+        )
+      }
+    },
+
     async deleteItem(id, ownerId) {
       const row = await one<Row>(`delete from items where id = $1 and owner_id = $2 returning id`, [
         id,
@@ -245,7 +277,20 @@ export function createNeonStore(url: string): Store {
          on conflict (item_id, claimant_id) do nothing returning *`,
         [itemId, claimantId, message]
       )
-      return (row as any) ?? null
+      if (!row) return null
+      const item = await this.getItem(itemId)
+      const claimant = await this.findUserById(claimantId)
+      if (item) {
+        await sql.query(
+          `insert into notifications (user_id, item_id, kind, message) values ($1,$2,'claim',$3)`,
+          [
+            item.owner_id,
+            itemId,
+            `${claimant?.display_name ?? 'มีคน'} อ้างว่าเป็นของ “${item.title}”`,
+          ]
+        )
+      }
+      return row as Claim
     },
 
     async listClaimsForOwner(ownerId) {
@@ -327,6 +372,18 @@ export function createNeonStore(url: string): Store {
         `update items set status = $1 where id = $2 and status <> 'returned'`,
         [status === 'approved' ? 'returned' : 'open', row.item_id]
       )
+      // ⭐ คะแนนความดี: ทั้งเจ้าของและคนที่มาช่วยกันคืนของ ได้ +10
+      if (status === 'approved') {
+        await sql.query(
+          `update users set points = points + 10
+           where id in (
+             select owner_id from items where id = $1
+             union
+             select $2
+           )`,
+          [row.item_id, row.claimant_id]
+        )
+      }
       const full = await all<Row>(
         `select cl.*, i.title as item_title, i.kind as item_kind, i.status as item_status,
                 u.id as u_id, u.display_name as u_name, u.avatar_emoji as u_emoji
@@ -396,6 +453,245 @@ export function createNeonStore(url: string): Store {
         resolvedRate: total ? Math.round((returned / total) * 100) : 0,
         members: Number(row?.members ?? 0),
         claims: Number(row?.claims ?? 0),
+      }
+    },
+
+    // =========================================================
+    //  ⭐ WATCHLIST
+    // =========================================================
+    async listWatches(userId) {
+      const rows = await all<Row>(
+        `select w.*, c.id as cat_id, c.label as cat_label, c.emoji as cat_emoji, c.color as cat_color
+         from watches w
+         left join categories c on c.id = w.category_id
+         where w.user_id = $1
+         order by w.created_at desc`,
+        [userId]
+      )
+      return rows.map((r) => ({
+        id: r.id,
+        user_id: r.user_id,
+        keyword: r.keyword,
+        category_id: r.category_id,
+        kind: r.kind,
+        active: r.active,
+        created_at:
+          r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+        category: r.cat_id
+          ? { id: r.cat_id, label: r.cat_label, emoji: r.cat_emoji, color: r.cat_color }
+          : null,
+      }))
+    },
+
+    async createWatch(input) {
+      const row = await one<Row>(
+        `insert into watches (user_id, keyword, category_id, kind)
+         values ($1, $2, $3, $4)
+         on conflict (user_id, keyword, category_id, kind) do update set active = true
+         returning *`,
+        [input.user_id, input.keyword, input.category_id, input.kind]
+      )
+      const cat = input.category_id
+        ? await one<Row>(`select * from categories where id = $1`, [input.category_id])
+        : null
+      return {
+        ...(row as any),
+        created_at:
+          row!.created_at instanceof Date
+            ? row!.created_at.toISOString()
+            : String(row!.created_at),
+        category: cat
+          ? { id: cat.id, label: cat.label, emoji: cat.emoji, color: cat.color }
+          : null,
+      }
+    },
+
+    async deleteWatch(id, userId) {
+      const row = await one<Row>(`delete from watches where id = $1 and user_id = $2 returning id`, [
+        id,
+        userId,
+      ])
+      return Boolean(row)
+    },
+
+    // =========================================================
+    //  ⭐ REVIEWS / REPUTATION
+    // =========================================================
+    async addReview(input) {
+      const row = await one<Row>(
+        `insert into reviews (reviewer_id, target_id, item_id, rating, comment)
+         values ($1, $2, $3, $4, $5)
+         on conflict (item_id, reviewer_id) do nothing
+         returning *`,
+        [input.reviewer_id, input.target_id, input.item_id, input.rating, input.comment]
+      )
+      return (row as any) ?? null
+    },
+
+    async listReviewsForUser(userId) {
+      const rows = await all<Row>(
+        `select r.*, u.id as u_id, u.display_name as u_name, u.avatar_emoji as u_emoji,
+                i.id as i_id, i.title as i_title
+         from reviews r
+         join users u on u.id = r.reviewer_id
+         left join items i on i.id = r.item_id
+         where r.target_id = $1
+         order by r.created_at desc`,
+        [userId]
+      )
+      return rows.map((r) => ({
+        id: r.id,
+        reviewer_id: r.reviewer_id,
+        target_id: r.target_id,
+        item_id: r.item_id,
+        rating: r.rating,
+        comment: r.comment,
+        created_at:
+          r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+        reviewer: { id: r.u_id, display_name: r.u_name, avatar_emoji: r.u_emoji },
+        item: r.i_id ? { id: r.i_id, title: r.i_title } : null,
+      }))
+    },
+
+    async reputation(userId) {
+      const row = await one<Row>(
+        `select
+           coalesce((select round(avg(rating)::numeric, 2) from reviews where target_id = $1), 0) as avg_rating,
+           coalesce((select count(*) from reviews where target_id = $1), 0)::int as reviews_count,
+           coalesce((select points from users where id = $1), 0)::int as points,
+           coalesce((select count(*) from items i where i.owner_id = $1 and i.status = 'returned'), 0)::int as helped_count`,
+        [userId]
+      )
+      const avg = Number(row?.avg_rating ?? 0)
+      const reviews = Number(row?.reviews_count ?? 0)
+      const points = Number(row?.points ?? 0)
+      const helped = Number(row?.helped_count ?? 0)
+      const score = Math.round(avg * 20 * Math.min(reviews, 10) * 0.5 + points + helped * 15)
+      return {
+        user_id: userId,
+        avg_rating: avg,
+        reviews_count: reviews,
+        points,
+        helped_count: helped,
+        score,
+        badge: score >= 900 ? 'legend' : score >= 400 ? 'hero' : score >= 150 ? 'trusted' : 'newbie',
+      }
+    },
+
+    // =========================================================
+    //  💬 CHAT
+    // =========================================================
+    async canAccessChat(itemId, userId) {
+      const row = await one<Row>(
+        `select 1 as ok from items i
+         where i.id = $1
+           and (i.owner_id = $2
+                or exists (select 1 from claims c where c.item_id = i.id and c.claimant_id = $2))`,
+        [itemId, userId]
+      )
+      return Boolean(row)
+    },
+
+    async listMessages(itemId) {
+      const rows = await all<Row>(
+        `select m.*, u.id as u_id, u.display_name as u_name, u.avatar_emoji as u_emoji
+         from messages m
+         left join users u on u.id = m.user_id
+         where m.item_id = $1
+         order by m.created_at asc
+         limit 200`,
+        [itemId]
+      )
+      return rows.map((r) => ({
+        id: r.id,
+        item_id: r.item_id,
+        user_id: r.user_id,
+        body: r.body,
+        created_at:
+          r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+        user: r.u_id
+          ? { id: r.u_id, display_name: r.u_name, avatar_emoji: r.u_emoji }
+          : null,
+      }))
+    },
+
+    async sendMessage(itemId, userId, body) {
+      const row = await one<Row>(
+        `insert into messages (item_id, user_id, body) values ($1, $2, $3) returning *`,
+        [itemId, userId, body]
+      )
+      if (!row) return null
+      const u = await this.findUserById(userId)
+      const item = await this.getItem(itemId)
+      if (item && item.owner_id !== userId) {
+        await sql.query(
+          `insert into notifications (user_id, item_id, kind, message) values ($1,$2,'chat',$3)`,
+          [item.owner_id, itemId, `${u?.display_name ?? 'มีคน'} ส่งข้อความในแชทเรื่อง “${item.title}”`]
+        )
+      }
+      return {
+        id: row.id,
+        item_id: row.item_id,
+        user_id: row.user_id,
+        body: row.body,
+        created_at:
+          row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+        user: u
+          ? { id: u.id, display_name: u.display_name, avatar_emoji: u.avatar_emoji }
+          : null,
+      }
+    },
+
+    // =========================================================
+    //  👑 ADMIN
+    // =========================================================
+    async adminOverview(): Promise<AdminOverview> {
+      const [stats, topUsers, recentItems, cats, daily] = await Promise.all([
+        this.stats(),
+        all<Row>(
+          `select u.id, u.display_name, u.avatar_emoji, u.campus, u.points,
+                  coalesce((select count(*) from reviews r where r.target_id = u.id), 0)::int as reviews_count,
+                  coalesce((select round(avg(rating)::numeric, 2) from reviews r where r.target_id = u.id), 0) as avg_rating
+           from users u
+           order by u.points desc, u.created_at asc
+           limit 12`
+        ),
+        this.listItems({ limit: 8, sort: 'new' }),
+        all<Row>(
+          `select c.id, c.label, c.emoji, c.color, count(i.id)::int as count
+           from categories c
+           left join items i on i.category_id = c.id
+           group by c.id, c.label, c.emoji, c.color
+           order by count desc`
+        ),
+        all<Row>(
+          `select to_char(created_at, 'DD/MM') as day, count(*)::int as count
+           from items
+           where created_at > now() - interval '14 days'
+           group by 1 order by 1`
+        ),
+      ])
+
+      return {
+        stats,
+        top_users: topUsers.map((u) => ({
+          id: u.id,
+          display_name: u.display_name,
+          avatar_emoji: u.avatar_emoji,
+          campus: u.campus,
+          points: u.points,
+          reviews_count: Number(u.reviews_count ?? 0),
+          avg_rating: Number(u.avg_rating ?? 0),
+        })),
+        recent_items: recentItems.items,
+        category_breakdown: cats.map((c) => ({
+          id: c.id,
+          label: c.label,
+          emoji: c.emoji,
+          color: c.color,
+          count: Number(c.count ?? 0),
+        })),
+        daily: daily.map((d) => ({ day: d.day, count: Number(d.count ?? 0) })),
       }
     },
   }

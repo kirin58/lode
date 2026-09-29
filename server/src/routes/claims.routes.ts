@@ -38,12 +38,6 @@ claimsRouter.post('/:itemId', requireAuth, async (req, res) => {
     res.status(409).json({ error: 'คุณส่งคำขอนี้ไปแล้ว รอเจ้าของตอบนะ 👀' })
     return
   }
-  await store.notify(
-    item.owner_id,
-    item.id,
-    'claim',
-    `มีคนอ้างของ "${item.title}" ของคุณเข้ามาแล้ว`
-  )
   res.status(201).json({ claim })
 })
 

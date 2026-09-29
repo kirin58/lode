@@ -33,7 +33,8 @@ export const useAuthStore = defineStore('auth', () => {
       const res = await api.get<{ user: User }>('/auth/me')
       user.value = res.user
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) clear()
+      // 401 = token ไม่ถูกต้อง/หมดอายุ, 404 = ผู้ใช้ถูกลบ (เช่น demo mode รีสตาร์ท)
+      if (err instanceof ApiError && (err.status === 401 || err.status === 404)) clear()
     } finally {
       ready.value = true
     }

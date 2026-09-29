@@ -9,10 +9,21 @@
     "dev:client": "npm --prefix client run dev",
     "build": "npm --prefix server run build && npm --prefix client run build",
     "preview": "npm --prefix client run preview",
-    "typecheck": "npm --prefix server run typecheck",
-    "db:push": "npm --prefix server run db:push"
+    "typecheck": "npm --prefix server run typecheck && npm --prefix client run typecheck",
+    "db:push": "npm --prefix server run db:push",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "npm --prefix server run test && npm --prefix client run test",
+    "test:unit:watch": "npm --prefix client run test:watch",
+    "test:coverage": "npm --prefix server run test:coverage && npm --prefix client run test:coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:mobile": "playwright test --project=mobile",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "ci": "npm run typecheck && npm run test:unit && npm run build"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "concurrently": "^9.1.2"
   }
 }

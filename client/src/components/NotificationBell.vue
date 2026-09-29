@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { useSocialStore } from '@/stores/social'
@@ -19,6 +19,18 @@ const dot: Record<string, string> = {
   claim: 'from-bubble-500 to-night-500',
   approved: 'from-lime-pop to-mint-pop',
   rejected: 'from-rose-400 to-bubble-600',
+  watch: 'from-mint-pop to-night-500',
+  chat: 'from-mango-400 to-bubble-500',
+  review: 'from-lime-pop to-mango-400',
+}
+
+const emoji: Record<string, string> = {
+  approved: '🎉',
+  rejected: '🙃',
+  claim: '🙋',
+  watch: '🔔',
+  chat: '💬',
+  review: '⭐',
 }
 
 onMounted(() => {
@@ -32,15 +44,15 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="relative">
     <button
-      class="relative grid size-11 place-items-center rounded-2xl glass text-lg transition hover:bg-white/12 active:scale-95"
-      :class="open ? 'bg-white/12' : ''"
+      class="relative grid size-11 place-items-center rounded-2xl glass text-lg transition hover:bg-fill-2 active:scale-95"
+      :class="open ? 'bg-fill-2' : ''"
       aria-label="การแจ้งเตือน"
       @click="toggle"
     >
       🔔
       <span
         v-if="social.unread > 0"
-        class="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-bubble-500 px-1 text-[10px] font-extrabold text-white ring-2 ring-ink"
+        class="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-bubble-500 px-1 text-[10px] font-extrabold text-white ring-2 ring-page"
       >
         {{ social.unread }}
       </span>
@@ -51,7 +63,7 @@ onUnmounted(() => {
         v-if="open"
         class="absolute right-0 z-50 mt-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-3xl glass-strong shadow-lift"
       >
-        <div class="flex items-center justify-between border-b border-white/8 px-4 py-3">
+        <div class="flex items-center justify-between border-b border-line px-4 py-3">
           <h4 class="font-display text-sm font-extrabold">การแจ้งเตือน</h4>
           <button
             v-if="social.unread > 0"
@@ -65,7 +77,7 @@ onUnmounted(() => {
         <div class="max-h-80 overflow-y-auto">
           <p
             v-if="social.notifications.length === 0"
-            class="px-4 py-10 text-center text-sm text-night-300"
+            class="px-4 py-10 text-center text-sm text-muted-2"
           >
             ยังเงียบอยู่นะ 🤫
           </p>
@@ -73,17 +85,17 @@ onUnmounted(() => {
             <li
               v-for="n in social.notifications"
               :key="n.id"
-              class="flex gap-3 px-4 py-3 transition hover:bg-white/5"
+              class="flex gap-3 px-4 py-3 transition hover:bg-fill"
             >
               <span
                 class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-sm"
                 :class="dot[n.kind] ?? 'from-night-500 to-night-600'"
               >
-                {{ n.kind === 'approved' ? '🎉' : n.kind === 'rejected' ? '🙃' : '🙋' }}
+                {{ emoji[n.kind] ?? '🔔' }}
               </span>
               <div class="min-w-0">
-                <p class="text-sm leading-snug text-night-50">{{ n.message }}</p>
-                <p class="mt-0.5 text-[11px] text-night-400">{{ timeAgo(n.created_at) }}</p>
+                <p class="text-sm leading-snug text-title">{{ n.message }}</p>
+                <p class="mt-0.5 text-[11px] text-muted-3">{{ timeAgo(n.created_at) }}</p>
               </div>
             </li>
           </ul>

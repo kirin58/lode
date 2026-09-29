@@ -91,7 +91,7 @@ onMounted(() => {
 
       <div class="relative">
         <span
-          class="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 text-xs font-bold ring-1 ring-white/15"
+          class="inline-flex items-center gap-2 rounded-full bg-fill-2 px-3 py-1.5 text-xs font-bold ring-1 ring-line"
         >
           🎟️ เข้าร่วมชุมชนคืนของ
         </span>
@@ -99,7 +99,7 @@ onMounted(() => {
           เข้ามาแล้ว<br />
           <span class="text-gradient">ช่วยกัน</span> คืนของได้เลย 💜
         </h2>
-        <p class="mt-4 max-w-sm text-sm leading-relaxed text-night-200">
+        <p class="mt-4 max-w-sm text-sm leading-relaxed text-muted-1">
           สมัครฟรี ใช้เวลาไม่ถึง 20 วินาที แล้วคุณจะได้รับการแจ้งเตือนทุกครั้งที่มีคน
           เจอของของคุณ
         </p>
@@ -108,14 +108,14 @@ onMounted(() => {
           <div
             v-for="p in perks"
             :key="p.title"
-            class="flex items-start gap-3 rounded-2xl bg-white/5 p-4 ring-1 ring-white/8 transition hover:-translate-y-0.5 hover:bg-white/8"
+            class="flex items-start gap-3 rounded-2xl bg-fill p-4 ring-1 ring-line transition hover:-translate-y-0.5 hover:bg-fill-2"
           >
-            <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-white/8 text-lg">
+            <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-fill-2 text-lg">
               {{ p.emoji }}
             </span>
             <div>
               <p class="text-sm font-bold">{{ p.title }}</p>
-              <p class="text-xs text-night-300">{{ p.body }}</p>
+              <p class="text-xs text-muted-2">{{ p.body }}</p>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ onMounted(() => {
         <h1 class="font-display text-3xl font-black sm:text-4xl">
           สมัครสมาชิก <span class="text-gradient-hot">ฟรี</span> ✨
         </h1>
-        <p class="mt-2 text-sm text-night-300">
+        <p class="mt-2 text-sm text-muted-2">
           มีบัญชีแล้ว?
           <RouterLink to="/login" class="font-bold text-lime-pop hover:underline">เข้าสู่ระบบ</RouterLink>
         </p>
@@ -137,10 +137,10 @@ onMounted(() => {
       <form class="space-y-4" :class="shake ? 'animate-wiggle' : ''" @submit.prevent="submit">
         <!-- avatar picker -->
         <div>
-          <span class="mb-2.5 block text-xs font-bold text-night-200">เลือกอวตารของคุณ</span>
+          <span class="mb-2.5 block text-xs font-bold text-muted-1">เลือกอวตารของคุณ</span>
           <div class="flex items-center gap-4">
             <span
-              class="grid size-16 shrink-0 place-items-center rounded-3xl bg-gradient-to-br from-night-500 to-bubble-500 text-3xl shadow-glow ring-1 ring-white/20 transition"
+              class="grid size-16 shrink-0 place-items-center rounded-3xl bg-gradient-to-br from-night-500 to-bubble-500 text-3xl shadow-glow ring-1 ring-line transition"
             >
               {{ avatar }}
             </span>
@@ -150,7 +150,7 @@ onMounted(() => {
                 :key="a"
                 type="button"
                 class="grid aspect-square place-items-center rounded-xl text-lg transition hover:scale-110"
-                :class="avatar === a ? 'bg-white/20 ring-2 ring-lime-pop' : 'bg-white/5 ring-1 ring-white/8'"
+                :class="avatar === a ? 'bg-white/20 ring-2 ring-lime-pop' : 'bg-fill ring-1 ring-line'"
                 @click="avatar = a"
               >
                 {{ a }}
@@ -160,64 +160,64 @@ onMounted(() => {
         </div>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">ชื่อเล่น / ชื่อจริง</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">ชื่อเล่น / ชื่อจริง</span>
           <input
             v-model="name"
             type="text"
             placeholder="เช่น โจ้ หรือ น้องฟ้า"
             maxlength="40"
-            class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
         </label>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">อีเมล</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">อีเมล</span>
           <input
             v-model="email"
             type="email"
             placeholder="you@campus.ac.th"
-            class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
         </label>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">รหัสผ่าน</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">รหัสผ่าน</span>
           <input
             v-model="password"
             type="password"
             placeholder="อย่างน้อย 8 ตัวอักษร"
-            class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
           <div v-if="password" class="mt-2.5 flex items-center gap-2">
-            <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-white/8">
+            <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-fill-2">
               <div
                 class="h-full rounded-full transition-all duration-300"
                 :class="strengthMeta.color"
                 :style="{ width: strengthMeta.width }"
               />
             </div>
-            <span class="shrink-0 text-[10px] font-bold text-night-300">
+            <span class="shrink-0 text-[10px] font-bold text-muted-2">
               {{ strengthMeta.label }}
             </span>
           </div>
         </label>
 
         <label class="block">
-          <span class="mb-2 block text-xs font-bold text-night-200">
-            สถานที่ศึกษา <span class="text-night-500">(ไม่บังคับ)</span>
+          <span class="mb-2 block text-xs font-bold text-muted-1">
+            สถานที่ศึกษา <span class="text-title0">(ไม่บังคับ)</span>
           </span>
           <input
             v-model="campus"
             type="text"
-            placeholder="เช่น มหาวิทยาลัยบูรพา"
+            placeholder="เช่น มหาวิทยาลัยบูรพาา"
             maxlength="80"
-            class="w-full rounded-2xl bg-white/6 px-4 py-3.5 text-sm outline-none ring-1 ring-white/10 transition placeholder:text-night-400 focus:ring-2 focus:ring-bubble-400/60"
+            class="w-full rounded-2xl bg-fill px-4 py-3.5 text-sm outline-none ring-1 ring-line transition placeholder:text-muted-3 focus:ring-2 focus:ring-bubble-400/60"
           />
         </label>
 
         <label class="flex cursor-pointer items-start gap-2.5 pt-1">
           <input v-model="agreed" type="checkbox" class="mt-0.5 size-4 accent-lime-pop" />
-          <span class="text-[11px] leading-relaxed text-night-300">
+          <span class="text-[11px] leading-relaxed text-muted-2">
             ยอมรับว่าจะไม่เอาของที่ไม่ใช่ของตัวเอง และยินดีช่วยคนอื่นคืนของ
             💛
           </span>
@@ -239,7 +239,7 @@ onMounted(() => {
         </button>
       </form>
 
-      <p class="mt-5 text-center text-[11px] text-night-500">
+      <p class="mt-5 text-center text-[11px] text-title0">
         🔒 ข้อมูลถูกเก็บบน Neon Postgres แบบเข้ารหัสรหัสผ่าน (bcrypt)
       </p>
     </div>

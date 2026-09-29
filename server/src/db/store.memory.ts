@@ -4,18 +4,25 @@
  */
 import { randomUUID } from 'node:crypto'
 import type {
+  AdminOverview,
   Claim,
   ClaimStatus,
   ClaimWithMeta,
   Category,
   Item,
+  ItemKind,
   ItemWithMeta,
   ListItemsQuery,
+  Message,
   NotificationRow,
+  Reputation,
+  Review,
+  ReviewWithMeta,
   Stats,
   Store,
   User,
   UserWithSecret,
+  Watch,
 } from '../types.js'
 import { CATEGORIES } from '../data/categories.js'
 import { DEMO_ITEMS, DEMO_USERS } from '../data/demo.js'
@@ -26,6 +33,9 @@ export function createMemoryStore(): Store {
   const claims: Claim[] = []
   const notifications: NotificationRow[] = []
   const cats: Category[] = [...CATEGORIES]
+  const watches: Watch[] = []
+  const reviews: Review[] = []
+  const messages: Message[] = []
 
   const now = Date.now()
   const daysAgo = (d: number) => new Date(now - d * 86_400_000).toISOString()
@@ -102,8 +112,8 @@ export function createMemoryStore(): Store {
         avatar_emoji: input.avatar_emoji ?? '🫥',
         campus: input.campus ?? null,
         bio: '',
-        role: 'user',
-        points: 0,
+        role: input.role ?? 'user',
+        points: input.role === 'admin' ? 100 : 0,
         created_at: new Date().toISOString(),
       }
       users.push(user)
@@ -181,7 +191,31 @@ export function createMemoryStore(): Store {
         created_at: new Date().toISOString(),
       }
       items.unshift(item)
-      return decorate(item)
+      const created = decorate(item)
+      await this.notifyWatchers(created)
+      return created
+    },
+
+    async notifyWatchers(item) {
+      for (const w of watches) {
+        if (!w.active || w.user_id === item.owner_id) continue
+        if (w.kind && w.kind !== item.kind) continue
+        if (w.category_id && w.category_id !== item.category_id) continue
+        if (
+          w.keyword &&
+          !`${item.title} ${item.location}`.toLowerCase().includes(w.keyword.toLowerCase())
+        )
+          continue
+        notifications.unshift({
+          id: randomUUID(),
+          user_id: w.user_id,
+          item_id: item.id,
+          kind: 'watch',
+          message: `มีประกาศใหม่ที่คุณติดตาม: “${item.title}”`,
+          read_at: null,
+          created_at: new Date().toISOString(),
+        })
+      }
     },
 
     async updateItem(id, patch, ownerId) {
@@ -210,6 +244,19 @@ export function createMemoryStore(): Store {
         created_at: new Date().toISOString(),
       }
       claims.unshift(claim)
+      const item = items.find((i) => i.id === itemId)
+      const claimant = users.find((u) => u.id === claimantId)
+      if (item) {
+        notifications.unshift({
+          id: randomUUID(),
+          user_id: item.owner_id,
+          item_id: itemId,
+          kind: 'claim',
+          message: `${claimant?.display_name ?? 'มีคน'} อ้างว่าเป็นของ “${item.title}”`,
+          read_at: null,
+          created_at: new Date().toISOString(),
+        })
+      }
       return claim
     },
 
@@ -228,7 +275,13 @@ export function createMemoryStore(): Store {
       const item = items.find((i) => i.id === claim.item_id)
       if (!item || item.owner_id !== ownerId) return null
       claim.status = status
-      if (status === 'approved' && item.status !== 'returned') item.status = 'returned'
+      if (status === 'approved' && item.status !== 'returned') {
+        item.status = 'returned'
+        const owner = users.find((u) => u.id === item.owner_id)
+        const claimant = users.find((u) => u.id === claim.claimant_id)
+        if (owner) owner.points += 10
+        if (claimant) claimant.points += 10
+      }
       if (status === 'rejected' && item.status === 'returned') item.status = 'open'
       return claimMeta(claim, 'owner')
     },
@@ -265,6 +318,213 @@ export function createMemoryStore(): Store {
         resolvedRate: total ? Math.round((returned / total) * 100) : 0,
         members: users.length,
         claims: claims.length,
+      }
+    },
+
+    // =========================================================
+    //  ⭐ WATCHLIST
+    // =========================================================
+    async listWatches(userId) {
+      return watches
+        .filter((w) => w.user_id === userId)
+        .map((w) => ({ ...w, category: cats.find((c) => c.id === w.category_id) ?? null }))
+        .reverse()
+    },
+
+    async createWatch(input) {
+      const exists = watches.find(
+        (w) =>
+          w.user_id === input.user_id &&
+          w.keyword === input.keyword &&
+          w.category_id === input.category_id &&
+          w.kind === input.kind
+      )
+      if (exists) {
+        exists.active = true
+        return { ...exists, category: cats.find((c) => c.id === exists.category_id) ?? null }
+      }
+      const watch: Watch = {
+        id: randomUUID(),
+        user_id: input.user_id,
+        keyword: input.keyword,
+        category_id: input.category_id,
+        kind: input.kind,
+        active: true,
+        created_at: new Date().toISOString(),
+        category: cats.find((c) => c.id === input.category_id) ?? null,
+      }
+      watches.push(watch)
+      return watch
+    },
+
+    async deleteWatch(id, userId) {
+      const idx = watches.findIndex((w) => w.id === id && w.user_id === userId)
+      if (idx === -1) return false
+      watches.splice(idx, 1)
+      return true
+    },
+
+    // =========================================================
+    //  ⭐ REVIEWS / REPUTATION
+    // =========================================================
+    async addReview(input) {
+      if (reviews.some((r) => r.item_id === input.item_id && r.reviewer_id === input.reviewer_id))
+        return null
+      const review: Review = {
+        id: randomUUID(),
+        reviewer_id: input.reviewer_id,
+        target_id: input.target_id,
+        item_id: input.item_id,
+        rating: input.rating,
+        comment: input.comment,
+        created_at: new Date().toISOString(),
+      }
+      reviews.push(review)
+      return review
+    },
+
+    async listReviewsForUser(userId) {
+      return reviews
+        .filter((r) => r.target_id === userId)
+        .map((r) => {
+          const reviewer = users.find((u) => u.id === r.reviewer_id)
+          const item = items.find((i) => i.id === r.item_id)
+          return {
+            ...r,
+            reviewer: reviewer
+              ? {
+                  id: reviewer.id,
+                  display_name: reviewer.display_name,
+                  avatar_emoji: reviewer.avatar_emoji,
+                }
+              : null,
+            item: item ? { id: item.id, title: item.title } : null,
+          }
+        })
+        .reverse()
+    },
+
+    async reputation(userId): Promise<Reputation> {
+      const mine = reviews.filter((r) => r.target_id === userId)
+      const avg = mine.length ? mine.reduce((a, r) => a + r.rating, 0) / mine.length : 0
+      const points = users.find((u) => u.id === userId)?.points ?? 0
+      const helped = items.filter((i) => i.owner_id === userId && i.status === 'returned').length
+      const score = Math.round(avg * 20 * Math.min(mine.length, 10) * 0.5 + points + helped * 15)
+      return {
+        user_id: userId,
+        avg_rating: Number(avg.toFixed(2)),
+        reviews_count: mine.length,
+        points,
+        helped_count: helped,
+        score,
+        badge:
+          score >= 900 ? 'legend' : score >= 400 ? 'hero' : score >= 150 ? 'trusted' : 'newbie',
+      }
+    },
+
+    // =========================================================
+    //  💬 CHAT
+    // =========================================================
+    async canAccessChat(itemId, userId) {
+      const item = items.find((i) => i.id === itemId)
+      if (!item) return false
+      return (
+        item.owner_id === userId || claims.some((c) => c.item_id === itemId && c.claimant_id === userId)
+      )
+    },
+
+    async listMessages(itemId) {
+      return messages
+        .filter((m) => m.item_id === itemId)
+        .map((m) => {
+          const u = users.find((x) => x.id === m.user_id)
+          return {
+            ...m,
+            user: u
+              ? { id: u.id, display_name: u.display_name, avatar_emoji: u.avatar_emoji }
+              : null,
+          }
+        })
+    },
+
+    async sendMessage(itemId, userId, body) {
+      if (!items.some((i) => i.id === itemId)) return null
+      const u = users.find((x) => x.id === userId)
+      const msg: Message = {
+        id: randomUUID(),
+        item_id: itemId,
+        user_id: userId,
+        body,
+        created_at: new Date().toISOString(),
+        user: u ? { id: u.id, display_name: u.display_name, avatar_emoji: u.avatar_emoji } : null,
+      }
+      messages.push(msg)
+      const item = items.find((i) => i.id === itemId)
+      if (item && item.owner_id !== userId) {
+        notifications.unshift({
+          id: randomUUID(),
+          user_id: item.owner_id,
+          item_id: itemId,
+          kind: 'chat',
+          message: `${u?.display_name ?? 'มีคน'} ส่งข้อความในแชทเรื่อง “${item.title}”`,
+          read_at: null,
+          created_at: new Date().toISOString(),
+        })
+      }
+      return msg
+    },
+
+    // =========================================================
+    //  👑 ADMIN
+    // =========================================================
+    async adminOverview(): Promise<AdminOverview> {
+      const s = await this.stats()
+      const topUsers = [...users]
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 12)
+        .map((u) => {
+          const mine = reviews.filter((r) => r.target_id === u.id)
+          return {
+            id: u.id,
+            display_name: u.display_name,
+            avatar_emoji: u.avatar_emoji,
+            campus: u.campus,
+            points: u.points,
+            reviews_count: mine.length,
+            avg_rating: Number(
+              (mine.length ? mine.reduce((a, r) => a + r.rating, 0) / mine.length : 0).toFixed(2)
+            ),
+          }
+        })
+      const recent = await this.listItems({ limit: 8, sort: 'new' })
+      const breakdown = cats
+        .map((c) => ({
+          id: c.id,
+          label: c.label,
+          emoji: c.emoji,
+          color: c.color,
+          count: items.filter((i) => i.category_id === c.id).length,
+        }))
+        .sort((a, b) => b.count - a.count)
+
+      const dayKey = (d: Date) =>
+        `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+      const buckets = new Map<string, number>()
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86_400_000)
+        buckets.set(dayKey(d), 0)
+      }
+      for (const it of items) {
+        const key = dayKey(new Date(it.created_at))
+        if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1)
+      }
+
+      return {
+        stats: s,
+        top_users: topUsers,
+        recent_items: recent.items,
+        category_breakdown: breakdown,
+        daily: Array.from(buckets, ([day, count]) => ({ day, count })),
       }
     },
   }

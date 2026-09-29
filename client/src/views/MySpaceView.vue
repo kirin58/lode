@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { api, ApiError } from '@/lib/api'
@@ -41,12 +41,11 @@ async function load() {
   try {
     await auth.init()
     if (!auth.user) return
-    const [items, socials] = await Promise.all([
+    const [items] = await Promise.all([
       api.get<{ items: Item[] }>(`/items?mine=${auth.user.id}&limit=100`),
       social.loadAll(),
     ])
     myItems.value = items.items
-    void socials
   } finally {
     loading.value = false
   }
@@ -103,7 +102,7 @@ onMounted(load)
       <div class="absolute -right-16 -top-16 size-48 rounded-full bg-bubble-500/20 blur-3xl animate-float" />
       <div class="relative flex flex-col gap-6 sm:flex-row sm:items-center">
         <span
-          class="grid size-20 shrink-0 place-items-center rounded-[1.75rem] bg-gradient-to-br from-night-500 to-bubble-500 text-4xl shadow-glow ring-1 ring-white/20"
+          class="grid size-20 shrink-0 place-items-center rounded-[1.75rem] bg-gradient-to-br from-night-500 to-bubble-500 text-4xl shadow-glow ring-1 ring-line"
         >
           {{ auth.user?.avatar_emoji }}
         </span>
@@ -111,30 +110,30 @@ onMounted(load)
           <h1 class="font-display text-2xl font-black sm:text-3xl">
             พื้นที่ของ {{ auth.user?.display_name }}
           </h1>
-          <p class="mt-1 text-sm text-night-300">
+          <p class="mt-1 text-sm text-muted-2">
             {{ auth.user?.campus ?? 'ไม่ระบุสถานที่ศึกษา' }} · เข้าร่วมเมื่อ
             {{ timeAgo(auth.user?.created_at) }}
           </p>
         </div>
         <div class="grid grid-cols-3 gap-2 sm:gap-3">
-          <div class="rounded-2xl bg-white/6 px-4 py-3 text-center ring-1 ring-white/8">
+          <div class="rounded-2xl bg-fill px-4 py-3 text-center ring-1 ring-line">
             <p class="font-display text-xl font-black">{{ myItems.length }}</p>
-            <p class="text-[10px] text-night-300">ประกาศ</p>
+            <p class="text-[10px] text-muted-2">ประกาศ</p>
           </div>
-          <div class="rounded-2xl bg-white/6 px-4 py-3 text-center ring-1 ring-white/8">
+          <div class="rounded-2xl bg-fill px-4 py-3 text-center ring-1 ring-line">
             <p class="font-display text-xl font-black text-lime-pop">{{ returnedCount }}</p>
-            <p class="text-[10px] text-night-300">คืนสำเร็จ</p>
+            <p class="text-[10px] text-muted-2">คืนสำเร็จ</p>
           </div>
-          <div class="rounded-2xl bg-white/6 px-4 py-3 text-center ring-1 ring-white/8">
+          <div class="rounded-2xl bg-fill px-4 py-3 text-center ring-1 ring-line">
             <p class="font-display text-xl font-black text-bubble-400">
               {{ social.incoming.length }}
             </p>
-            <p class="text-[10px] text-night-300">คำขอ</p>
+            <p class="text-[10px] text-muted-2">คำขอ</p>
           </div>
         </div>
         <RouterLink
           to="/report"
-          class="shrink-0 rounded-2xl bg-white px-5 py-3 text-center text-sm font-extrabold text-ink transition hover:-translate-y-0.5"
+          class="shrink-0 rounded-2xl bg-title px-5 py-3 text-center text-sm font-extrabold text-paper transition hover:-translate-y-0.5"
         >
           ＋ ลงประกาศ
         </RouterLink>
@@ -148,16 +147,14 @@ onMounted(load)
         :key="t.id"
         class="flex shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold ring-1 transition"
         :class="
-          tab === t.id
-            ? 'bg-white text-ink ring-white shadow-lg'
-            : 'glass text-night-200 ring-white/8 hover:bg-white/10'
+          tab === t.id ? 'bg-title text-paper ring-line shadow-lg' : 'glass text-muted-1 ring-line hover:bg-fill'
         "
         @click="switchTab(t.id)"
       >
         {{ t.emoji }} {{ t.label }}
         <span
           class="rounded-full px-1.5 py-0.5 text-[10px] font-extrabold"
-          :class="tab === t.id ? 'bg-ink/10' : 'bg-white/10'"
+          :class="tab === t.id ? 'bg-paper/15' : 'bg-fill-2'"
         >
           {{ t.count }}
         </span>
@@ -172,9 +169,7 @@ onMounted(load)
       <div v-else-if="myItems.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="item in myItems" :key="item.id" class="group relative">
           <ItemCard :item="item" />
-          <div
-            class="mt-2 flex flex-wrap items-center gap-2 rounded-2xl glass px-3 py-2.5 text-[11px]"
-          >
+          <div class="mt-2 flex flex-wrap items-center gap-2 rounded-2xl glass px-3 py-2.5 text-[11px]">
             <span
               class="rounded-full px-2 py-0.5 font-extrabold"
               :class="STATUS_META[item.status].chip"
@@ -182,14 +177,14 @@ onMounted(load)
               {{ STATUS_META[item.status].emoji }} {{ STATUS_META[item.status].label }}
             </span>
             <select
-              class="ml-auto rounded-xl bg-white/8 px-2 py-1.5 text-[11px] font-bold outline-none ring-1 ring-white/10"
+              class="ml-auto rounded-xl bg-fill-2 px-2 py-1.5 text-[11px] font-bold text-muted-1 outline-none ring-1 ring-line"
               :value="item.status"
               @change="setStatus(item, ($event.target as HTMLSelectElement).value as ItemStatus)"
             >
-              <option value="open" class="bg-ink-soft">กำลังตามหา</option>
-              <option value="claimed" class="bg-ink-soft">มีคนอ้างแล้ว</option>
-              <option value="returned" class="bg-ink-soft">คืนสำเร็จ</option>
-              <option value="closed" class="bg-ink-soft">ปิดประกาศ</option>
+              <option value="open" class="bg-veil-strong">กำลังตามหา</option>
+              <option value="claimed" class="bg-veil-strong">มีคนอ้างแล้ว</option>
+              <option value="returned" class="bg-veil-strong">คืนสำเร็จ</option>
+              <option value="closed" class="bg-veil-strong">ปิดประกาศ</option>
             </select>
             <button
               class="rounded-xl bg-rose-400/12 px-2.5 py-1.5 font-bold text-rose-300 transition hover:bg-rose-400/20"
@@ -208,7 +203,7 @@ onMounted(load)
       >
         <RouterLink
           to="/report"
-          class="rounded-2xl bg-white px-5 py-2.5 text-sm font-extrabold text-ink transition hover:-translate-y-0.5"
+          class="rounded-2xl bg-title px-5 py-2.5 text-sm font-extrabold text-paper transition hover:-translate-y-0.5"
         >
           ลงประกาศแรกของคุณ ✨
         </RouterLink>
@@ -217,22 +212,19 @@ onMounted(load)
 
     <!-- INCOMING CLAIMS -->
     <section v-else-if="tab === 'incoming'" class="mt-6 space-y-3">
-      <div
-        v-if="social.incoming.length"
-        class="grid gap-3 md:grid-cols-2"
-      >
+      <div v-if="social.incoming.length" class="grid gap-3 md:grid-cols-2">
         <div
           v-for="c in social.incoming"
           :key="c.id"
           class="rounded-3xl glass p-5 transition hover:-translate-y-1"
         >
           <div class="flex items-start gap-3">
-            <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/10 text-xl">
+            <span class="grid size-11 shrink-0 place-items-center rounded-2xl bg-fill-2 text-xl">
               {{ c.claimant?.avatar_emoji ?? '👤' }}
             </span>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
-                <p class="truncate font-display text-sm font-extrabold">
+                <p class="truncate font-display text-sm font-extrabold text-title">
                   {{ c.claimant?.display_name }}
                 </p>
                 <span
@@ -256,13 +248,16 @@ onMounted(load)
               </div>
               <RouterLink
                 :to="`/item/${c.item_id}`"
-                class="mt-0.5 block truncate text-xs text-night-300 transition hover:text-white"
+                class="mt-0.5 block truncate text-xs text-muted-2 transition hover:text-title"
               >
                 ขอรับ “{{ c.item?.title }}” · {{ timeAgo(c.created_at) }}
               </RouterLink>
             </div>
           </div>
-          <p v-if="c.message" class="mt-3 rounded-2xl bg-white/5 p-3.5 text-xs leading-relaxed text-night-200">
+          <p
+            v-if="c.message"
+            class="mt-3 rounded-2xl bg-fill p-3.5 text-xs leading-relaxed text-muted-1"
+          >
             “{{ c.message }}”
           </p>
           <div v-if="c.status === 'pending'" class="mt-3 flex gap-2">
@@ -273,7 +268,7 @@ onMounted(load)
               ✓ ใช่ของเขา
             </button>
             <button
-              class="flex-1 rounded-2xl bg-white/8 px-3 py-2.5 text-xs font-bold ring-1 ring-white/10 transition hover:bg-white/16"
+              class="flex-1 rounded-2xl bg-fill-2 px-3 py-2.5 text-xs font-bold text-muted-1 ring-1 ring-line transition hover:bg-fill"
               @click="decide(c.id, 'rejected')"
             >
               ✕ ไม่ใช่
@@ -309,8 +304,10 @@ onMounted(load)
             {{ c.item?.kind === 'found' ? '🫶' : '🫥' }}
           </span>
           <div class="min-w-0 flex-1">
-            <p class="truncate font-display text-sm font-extrabold">{{ c.item?.title }}</p>
-            <p class="truncate text-[11px] text-night-300">
+            <p class="truncate font-display text-sm font-extrabold text-title">
+              {{ c.item?.title }}
+            </p>
+            <p class="truncate text-[11px] text-muted-2">
               เจ้าของ {{ c.claimant?.display_name }} · {{ timeAgo(c.created_at) }}
             </p>
           </div>
@@ -342,7 +339,7 @@ onMounted(load)
       >
         <RouterLink
           to="/browse"
-          class="rounded-2xl bg-white px-5 py-2.5 text-sm font-extrabold text-ink transition hover:-translate-y-0.5"
+          class="rounded-2xl bg-title px-5 py-2.5 text-sm font-extrabold text-paper transition hover:-translate-y-0.5"
         >
           ไปดูประกาศ →
         </RouterLink>

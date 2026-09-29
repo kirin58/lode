@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ItemCard from '@/components/ItemCard.vue'
@@ -35,14 +35,14 @@ const steps = [
     n: '02',
     emoji: '🔎',
     title: 'คนที่เจอเห็นทันที',
-    body: 'ระบบแจ้งเตือนเจ้าของทันทีที่มีคนกดขอรับของ',
+    body: 'ระบบแจ้งเตือนเจ้าของทันทีที่มีคนกดขอรับของ หรือมีประกาศใหม่ที่คุณติดตามไว้',
     color: 'from-night-500/25 to-mint-pop/10',
   },
   {
     n: '03',
     emoji: '🤝',
     title: 'นัดเจอ ได้ของคืน',
-    body: 'อนุมัติคำขอในแอป แล้วคุยกันตามสะดวก — ไม่ต้องเป็นภาษากลาง',
+    body: 'อนุมัติคำขอในแอป แชทนัดวัน ปิดเคส — ไว้ให้คะแนนความน่าเชื่อถือด้วย',
     color: 'from-mango-400/25 to-bubble-500/10',
   },
 ]
@@ -66,7 +66,7 @@ const ticker = [
       <div class="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
         <div class="animate-rise">
           <span
-            class="inline-flex items-center gap-2 rounded-full bg-white/6 px-3.5 py-1.5 text-xs font-bold text-night-100 ring-1 ring-white/12 backdrop-blur"
+            class="inline-flex items-center gap-2 rounded-full bg-fill px-3.5 py-1.5 text-xs font-bold text-muted-1 ring-1 ring-line backdrop-blur"
           >
             <span class="size-2 rounded-full bg-lime-pop animate-pulse" />
             ชุมชนคืนของ · มหาวิทยาลัยบูรพา
@@ -81,7 +81,7 @@ const ticker = [
             <span class="text-gradient-hot">ที่นี่กันสิ</span> ✨
           </h1>
 
-          <p class="mt-6 max-w-lg text-base leading-relaxed text-night-200 sm:text-lg">
+          <p class="mt-6 max-w-lg text-base leading-relaxed text-muted-1 sm:text-lg">
             ไม่ต้องเดินไปทุกห้องอีกต่อไป — โพสต์ทีเดียว เพื่อนในมหาลักษณ์เห็นแล้ววิ่งมาคืนให้
             <span class="text-lime-pop">ฟรี</span> 💚
           </p>
@@ -96,7 +96,7 @@ const ticker = [
                 v-model="q"
                 type="search"
                 placeholder="ค้นหา: AirPods, กระเป๋า, กุญแจ…"
-                class="w-full bg-transparent py-3 text-sm outline-none placeholder:text-night-400"
+                class="w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-3"
               />
             </div>
             <button
@@ -109,19 +109,17 @@ const ticker = [
           <div class="mt-8 flex flex-wrap items-center gap-3">
             <RouterLink
               to="/report"
-              class="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-extrabold text-ink transition hover:-translate-y-0.5 active:scale-95"
+              class="inline-flex items-center gap-2 rounded-2xl bg-title px-5 py-3 text-sm font-extrabold text-paper transition hover:-translate-y-0.5 active:scale-95"
             >
               📣 ลงประกาศของฉัน
             </RouterLink>
             <RouterLink
               to="/browse"
-              class="inline-flex items-center gap-2 rounded-2xl glass px-5 py-3 text-sm font-bold text-night-50 transition hover:bg-white/12"
+              class="inline-flex items-center gap-2 rounded-2xl glass px-5 py-3 text-sm font-bold text-title transition hover:bg-fill-2"
             >
               ดูประกาศทั้งหมด →
             </RouterLink>
-            <span v-if="!auth.isAuthed" class="text-xs text-night-400">
-              สมัครฟรี ใช้เวลา 20 วินาที
-            </span>
+            <span v-if="!auth.isAuthed" class="text-xs text-muted-3">สมัครฟรี ใช้เวลา 20 วินาที</span>
           </div>
         </div>
 
@@ -139,7 +137,7 @@ const ticker = [
             >
               <div class="flex items-center gap-3">
                 <span
-                  class="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-2xl ring-1 ring-white/15"
+                  class="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-2xl ring-1 ring-line"
                   :class="
                     item.kind === 'found'
                       ? 'from-mint-pop/80 to-lime-pop/60 text-ink'
@@ -159,10 +157,10 @@ const ticker = [
                   >
                     {{ item.kind === 'found' ? '🫶 เจอแล้ว' : '🫥 ทำหาย' }}
                   </span>
-                  <p class="mt-1 line-clamp-1 font-display text-sm font-bold">
+                  <p class="mt-1 line-clamp-1 font-display text-sm font-bold text-title">
                     {{ item.title }}
                   </p>
-                  <p class="line-clamp-1 text-[11px] text-night-300">📍 {{ item.location }}</p>
+                  <p class="line-clamp-1 text-[11px] text-muted-2">📍 {{ item.location }}</p>
                 </div>
               </div>
             </div>
@@ -177,9 +175,7 @@ const ticker = [
       </div>
 
       <!-- stats -->
-      <div
-        class="mt-16 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4"
-      >
+      <div class="mt-16 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <div
           v-for="(s, i) in [
             { label: 'ประกาศในระบบ', value: items.stats?.total ?? 0, suffix: ' ชิ้น', emoji: '📦' },
@@ -195,18 +191,18 @@ const ticker = [
           <p class="mt-2 font-display text-2xl font-black sm:text-3xl">
             <CountUp :value="s.value" :suffix="s.suffix" />
           </p>
-          <p class="mt-1 text-[11px] font-semibold text-night-300 sm:text-xs">{{ s.label }}</p>
+          <p class="mt-1 text-[11px] font-semibold text-muted-2 sm:text-xs">{{ s.label }}</p>
         </div>
       </div>
     </section>
 
     <!-- ================= TICKER ================= -->
-    <section class="relative my-14 border-y border-white/8 bg-ink/40 py-3 backdrop-blur">
+    <section class="relative my-14 border-y border-line bg-veil py-3 backdrop-blur">
       <div class="flex w-max animate-marquee gap-3">
         <span
           v-for="(t, i) in [...ticker, ...ticker]"
           :key="i"
-          class="whitespace-nowrap rounded-full bg-white/6 px-4 py-1.5 text-xs font-semibold text-night-200 ring-1 ring-white/8"
+          class="whitespace-nowrap rounded-full bg-fill px-4 py-1.5 text-xs font-semibold text-muted-1 ring-1 ring-line"
         >
           {{ t }}
         </span>
@@ -217,7 +213,9 @@ const ticker = [
     <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6">
       <div class="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/6 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-night-200 ring-1 ring-white/10">
+          <p
+            class="mb-3 inline-flex items-center gap-2 rounded-full bg-fill px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-1 ring-1 ring-line"
+          >
             <span class="size-1.5 rounded-full bg-bubble-400 animate-pulse" />
             how it works
           </p>
@@ -225,7 +223,7 @@ const ticker = [
             คืนของง่ายกว่าที่คิด <span class="text-gradient-hot">3 ขั้นตอน</span>
           </h2>
         </div>
-        <p class="max-w-sm text-sm leading-relaxed text-night-300">
+        <p class="max-w-sm text-sm leading-relaxed text-muted-2">
           ไม่มีค่าใช้จ่าย ไม่ต้องไปทำรายงาน แค่ช่วยกันก็พอ 💛
         </p>
       </div>
@@ -240,10 +238,10 @@ const ticker = [
             class="absolute -right-8 -top-8 size-32 rounded-full bg-gradient-to-br blur-2xl transition duration-500 group-hover:scale-150"
             :class="s.color"
           />
-          <span class="font-mono text-4xl font-bold text-white/10">{{ s.n }}</span>
+          <span class="font-mono text-4xl font-bold text-muted-3/30">{{ s.n }}</span>
           <div class="mt-2 text-4xl">{{ s.emoji }}</div>
-          <h3 class="mt-3 font-display text-lg font-extrabold">{{ s.title }}</h3>
-          <p class="mt-2 text-sm leading-relaxed text-night-300">{{ s.body }}</p>
+          <h3 class="mt-3 font-display text-lg font-extrabold text-title">{{ s.title }}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-muted-2">{{ s.body }}</p>
         </div>
       </div>
     </section>
@@ -261,7 +259,7 @@ const ticker = [
           class="group flex flex-col items-center gap-2 rounded-3xl glass p-3.5 text-center transition hover:-translate-y-1.5 hover:shadow-glow"
         >
           <span class="text-2xl transition duration-300 group-hover:scale-125">{{ c.emoji }}</span>
-          <span class="text-[11px] font-bold leading-tight text-night-200 group-hover:text-white">
+          <span class="text-[11px] font-bold leading-tight text-muted-1 group-hover:text-title">
             {{ c.label }}
           </span>
         </RouterLink>
@@ -272,7 +270,9 @@ const ticker = [
     <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6">
       <div class="mb-8 flex items-end justify-between gap-4">
         <div>
-          <p class="mb-3 inline-flex items-center gap-2 rounded-full bg-white/6 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-night-200 ring-1 ring-white/10">
+          <p
+            class="mb-3 inline-flex items-center gap-2 rounded-full bg-fill px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-1 ring-1 ring-line"
+          >
             <span class="size-1.5 rounded-full bg-lime-pop animate-pulse" />
             fresh drops
           </p>
@@ -282,7 +282,7 @@ const ticker = [
         </div>
         <RouterLink
           to="/browse"
-          class="hidden shrink-0 items-center gap-2 rounded-2xl glass px-4 py-2.5 text-sm font-bold transition hover:bg-white/12 sm:inline-flex"
+          class="hidden shrink-0 items-center gap-2 rounded-2xl glass px-4 py-2.5 text-sm font-bold transition hover:bg-fill-2 sm:inline-flex"
         >
           ดูทั้งหมด →
         </RouterLink>
@@ -299,7 +299,7 @@ const ticker = [
 
       <RouterLink
         to="/browse"
-        class="mt-6 flex items-center justify-center gap-2 rounded-2xl glass py-3.5 text-sm font-bold transition hover:bg-white/12 sm:hidden"
+        class="mt-6 flex items-center justify-center gap-2 rounded-2xl glass py-3.5 text-sm font-bold transition hover:bg-fill-2 sm:hidden"
       >
         ดูประกาศทั้งหมด →
       </RouterLink>
@@ -311,8 +311,12 @@ const ticker = [
         class="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-bubble-500 via-night-500 to-night-700 p-8 sm:p-12"
       >
         <div class="absolute inset-0 dotgrid opacity-25" />
-        <div class="absolute -right-16 -top-16 size-56 rounded-full bg-lime-pop/25 blur-3xl animate-float" />
-        <div class="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          class="absolute -right-16 -top-16 size-56 rounded-full bg-lime-pop/25 blur-3xl animate-float"
+        />
+        <div
+          class="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between"
+        >
           <div>
             <h2 class="font-display text-3xl font-black leading-tight text-white sm:text-4xl">
               เจอของแล้ว?<br class="sm:hidden" />อย่าเก็บไว้เดี่ยว ๆ นะ 😼
