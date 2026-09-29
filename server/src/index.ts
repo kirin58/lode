@@ -1,46 +1,49 @@
+/**
+ * Express adapter — ใช้ตอน dev ในเครื่องเท่านั้น (npm run dev)
+ * บน Vercel ใช้ api/[[...path]].ts แทน (โค้วง logic เดียวกัน)
+ */
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getStore } from './db/index.js'
-import { attachUser } from './auth.js'
-import { authRouter } from './routes/auth.routes.js'
-import { itemsRouter } from './routes/items.routes.js'
-import { claimsRouter, notifyRouter } from './routes/claims.routes.js'
-import { extraRouter } from './routes/extra.routes.js'
+import { handleRequest, type ReqCtx } from './api.js'
+import { upload } from './upload.js'
 
 const app = express()
 const PORT = Number(process.env.PORT ?? 8787)
 
 app.use(cors({ origin: true, credentials: true }))
-app.use(express.json({ limit: '2mb' }))
-app.use(attachUser)
+app.use(express.json({ limit: '4mb' }))
+app.use('/uploads', express.static(path.resolve(fileURLToPath(new URL('../uploads', import.meta.url)))))
 
-app.use('/api/auth', authRouter)
-app.use('/api/items', itemsRouter)
-app.use('/api/claims', claimsRouter)
-app.use('/api/notifications', notifyRouter)
-app.use('/api', extraRouter)
-
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, driver: getStore().driver, time: new Date().toISOString() })
-})
-
-const uploads = path.resolve(fileURLToPath(new URL('../uploads', import.meta.url)))
-app.use('/uploads', express.static(uploads))
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[error]', err)
-  res.status(err?.status ?? 500).json({ error: err?.message ?? 'เกิดข้อผิดพลาดบางอย่าง' })
+/** จับทุกคำขอ /api/* แล้วส่งต่อไปที่ตรรกะกลาง */
+app.all(/^\/api(\/.*)?$/, upload.single('image'), async (req, res) => {
+  try {
+    const ctx: ReqCtx = {
+      method: req.method,
+      path: req.originalUrl.split('?')[0],
+      query: req.query as Record<string, any>,
+      body: req.method === 'GET' ? {} : req.body,
+      headers: req.headers as Record<string, string | undefined>,
+      file: req.file
+        ? { originalname: (req.file as any).filename, size: req.file.size }
+        : undefined,
+    }
+    const result = await handleRequest(ctx)
+    res.status(result.status).json(result.body)
+  } catch (err: any) {
+    console.error('[api]', err)
+    res.status(500).json({ error: err?.message ?? 'เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์' })
+  }
 })
 
 const store = getStore()
 await store.init()
 
 app.listen(PORT, () => {
-  console.log(`\n  ✨ Lost & Found API → http://localhost:${PORT}`)
+  console.log(`\n  ✨ Lost & Found API (dev) → http://localhost:${PORT}`)
   console.log(`  🗄️  driver: ${store.driver}`)
   console.log(`  👤  ทดลอง: demo@lostfound.app / demo1234`)
   console.log(`  👑  แอดมิน: joe@lostfound.app / demo1234\n`)

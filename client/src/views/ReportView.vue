@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useItemsStore } from '@/stores/items'
+import { useHealthStore } from '@/stores/health'
 import { useToastStore } from '@/stores/toast'
 import type { ItemKind } from '@/types'
 
@@ -11,6 +12,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const store = useItemsStore()
+const health = useHealthStore()
 const toast = useToastStore()
 
 const kind = ref<ItemKind>((route.query.kind as ItemKind) ?? 'found')
@@ -99,6 +101,7 @@ onMounted(async () => {
   await auth.init()
   if (!store.categories.length) await store.loadMeta().catch(() => {})
   contact.value = auth.user?.email ?? ''
+  await health.check()
 })
 </script>
 
@@ -264,7 +267,19 @@ onMounted(async () => {
 
       <!-- right: image + submit -->
       <div class="space-y-5">
-        <div class="rounded-[2rem] glass p-6">
+        <!-- serverless (Vercel) เขียนไฟล์ไม่ได้ → ซ่อนส่วนอัปโหลดรูป -->
+        <div v-if="!health.uploads" class="rounded-[2rem] glass p-6">
+          <span class="mb-3 block text-xs font-bold text-muted-1">รูปของ</span>
+          <div class="rounded-3xl border-2 border-dashed border-line p-6 text-center">
+            <p class="text-2xl">🖼️</p>
+            <p class="mt-2 text-xs leading-relaxed text-muted-2">
+              เวอร์ชันนี้ (Vercel serverless) ยังไม่รองรับการอัปโหลดรูป
+              <br />แต่ยังโพสต์ประกาศพร้อมรายละเอียดได้ตามปกติครับ
+            </p>
+          </div>
+        </div>
+
+        <div v-else class="rounded-[2rem] glass p-6">
           <span class="mb-3 block text-xs font-bold text-muted-1">รูปของ (ถ้ามี)</span>
           <div
             class="relative aspect-square overflow-hidden rounded-3xl ring-1"

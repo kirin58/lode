@@ -6,6 +6,8 @@ export const useHealthStore = defineStore('health', () => {
   const online = ref(true)
   const checking = ref(false)
   const driver = ref<string | null>(null)
+  /** serverless (Vercel) ไม่รองรับการเขียนไฟล์ → client จะซ่อนตัวเลือกอัปโหลดรูป */
+  const uploads = ref(true)
   const lastChecked = ref<number | null>(null)
   let timer: ReturnType<typeof setInterval> | undefined
 
@@ -18,6 +20,7 @@ export const useHealthStore = defineStore('health', () => {
       if (!res.ok) throw new Error(String(res.status))
       const data = await res.json()
       driver.value = data.driver ?? null
+      if (typeof data.uploads === 'boolean') uploads.value = data.uploads
       online.value = true
     } catch {
       online.value = false
@@ -42,6 +45,6 @@ export const useHealthStore = defineStore('health', () => {
     timer = undefined
   }
 
-  return { online, offline, checking, driver, lastChecked, check, start, stop }
+  return { online, offline, checking, driver, uploads, lastChecked, check, start, stop }
 })
 

@@ -1,6 +1,7 @@
 # 🚀 Lost & Found — Vue 3 + Tailwind + Neon
 
-> แอปแจ้งของหาย–ของเจอ สำหรับนักศึกษา · UI แนว Gen-Z · ฐานข้อมูล Neon (Postgres serverless)
+> แอปแจ้งของหาย–ของเจอ สำหรับนักศึกษา · UI แนว Gen-Z · ฐานข้อมูล Neon
+> **Deploy ครั้งเดียวบน Vercel** — เว็บ + API (Serverless Functions) โดเมนเดียวกัน ไม่ต้องมี server แยก
 
 ## สคริปต์ที่ใช้บ่อย
 
@@ -41,14 +42,22 @@ npm run dev        # แล้วสตาร์ตใหม่
 E2E_NEON=1 npx playwright test        # จะ seed ข้อมูลลงฐานข้อมูลก่อน
 ```
 
+## Deploy ขึ้น Vercel (ครั้งเดียว)
+
+1. Import repo → Vercel (**Root Directory = เอาออก / repo root**)
+2. Environment Variables: `DATABASE_URL` (จาก Neon), `JWT_SECRET`
+3. Deploy เสร็จ 🎉 — ไม่ต้องตั้ง `VITE_API_URL` เพราะ API อยู่ที่ `/api` ของโดเมนเดียวกัน
+
+> ❌ อย่าตั้ง Root Directory = `client` (จะทำให้ `api/[[...path]].ts` หายไป → 404 ทุก request)
+
 ## โครงสร้าง
 
 ```
-server/   Express 5 + Neon (store.neon.ts) + memory driver สำหรับ demo
+api/      [[...path]].ts  → Vercel Function (จับทุก /api/*)
+server/   api.ts = ตรรกะกลาง (ใช้ร่วมกัน) · index.ts = Express adapter สำหรับ dev
 client/   Vue 3 + Tailwind v4 (ธีมมืด/สว่าง, 11 หน้า)
 tests/    Playwright E2E + fixtures
 scripts/  check.mjs (ตัวตรวจความพร้อม)
-.github/  ci.yml (5 jobs) · cd.yml (deploy)
 ```
 
 รายละเอียดทั้งหมดอยู่ใน [`README.md`](./README.md)

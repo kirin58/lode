@@ -2,6 +2,9 @@
 
 แอปแจ้งของหาย / ของเจอ สำหรับนักศึกษา สร้างด้วย **Vue 3 + TypeScript + Tailwind CSS v4** และเชื่อมฐานข้อมูล **Neon (PostgreSQL Serverless)**
 
+> 🚀 **Deploy ครั้งเดียวบน Vercel** — เว็บ (Vue) + API (Serverless Functions) อยู่โดเมนเดียวกัน
+> ไม่ต้องมี server แยก และไม่ต้องตั้ง `VITE_API_URL` เพราะ client ยิง `/api/...` ไปที่ตัวเอง
+
 UI แนว Gen-Z: gradient สด ๆ, glassmorphism, ฟอนต์ Outfit + Noto Sans Thai, การ์ดมน ๆ, สติกเกอร์หมวดหมู่, toast และแอนิเมชันลอย ๆ
 พร้อม **ธีมมืด/สว่าง**, แชทเรียลไทม์, watchlist แจ้งเตือนอัตโนมัติ, ระบบรีวิว+คะแนนความน่าเชื่อถือ, แดชบอร์ดแอดมิน
 และมี **CI/CD + unit test (Vitest) + E2E (Playwright)** ครบ
@@ -217,33 +220,28 @@ npm run ci     # typecheck + unit + build
 npm run test   # unit + e2e ครบ
 ```
 
-**Deploy เอง (ถ้าไม่อยากใช้ GitHub Actions)**
+**Deploy ครั้งเดียวที่ Vercel** — เว็บ + API อยู่โดเมนเดียวกัน (ไม่ต้องมี server แยก)
 
-> ⚠️ **สำคัญ: client กับ API เป็นคนละตัวกัน** — ถ้า deploy เว็บไปที่ Vercel แต่ไม่ได้ตั้ง `VITE_API_URL`
-> เว็บจะยิง `/api/...` ไปที่ตัวเองแล้วได้ **404** (เพราะไม่มี API บนโดเมนนั้น)
-
-**1) Deploy API (Express) ก่อน** — Render / Railway / Fly.io
-- start command: `npm --prefix server run start`
-- port: `8787` (Render จะให้ค่า PORT มาให้ใช้เอง)
-- env: `DATABASE_URL`, `JWT_SECRET`
-- ได้ URL เช่น `https://lost-found-api.onrender.com`
-
-**2) Deploy client (Vue)** — Vercel / Netlify
-
-เลือกอย่างใดอย่างหนึ่ง (ทั้งสองแบบมี `vercel.json` เตรียมไว้ให้แล้ว):
-
-| ตั้งค่าใน Vercel | ค่าที่ต้องใส่ |
+| ขั้นตอน | ทำอะไร |
 | --- | --- |
-| **Root Directory = คลิกขีดออก (repo root)** ✅ แนะนำ | ไม่ต้องใส่อะไรเพิ่ม (ใช้ `vercel.json` ที่ root) |
-| **Root Directory = `client`** | ใช้ `client/vercel.json` อัตโนมัติ (build = `npm run build`, output = `dist`) |
+| 1. Import โปรเจกต์ | เชื่อม GitHub repo → Vercel (**Root Directory = เอาออก / repo root**) |
+| 2. Environment Variables | `DATABASE_URL` (จาก Neon) · `JWT_SECRET` (สตริงยาว ๆ 32 ตัว) |
+| 3. Deploy | เสร็จ! เว็บที่ `https://<โปรเจกต์>.vercel.app` ใช้ได้ทันที |
 
-> ⚠️ **ต้องเป็นแบบเดียวกัน** — ถ้า Vercel อ่าน `vercel.json` ที่ root แต่ build command ถูกตั้งเป็น
-> `npm --prefix client run build` จะได้ `client/client/package.json` (ENOENT) แบบที่เจอ
-> แก้โดยลบ Build Command ออกจาก Settings เพื่อให้ Vercel ใช้ค่าใน `vercel.json` แทน
+`vercel.json` ที่ root จัดการให้อัตโนมัติ: build client, rewrite SPA (ยกเว้น `/api`) และ cache assets
 
-- **Environment Variable**: `VITE_API_URL=https://lost-found-api.onrender.com` (บังคับถ้า API ไม่ได้อยู่โดเมนเดียวกัน)
+> ❌ **อย่าตั้ง Root Directory = `client`** เพราะจะทำให้ `api/[[...path]].ts` (โฟลเดอร์ `api/` ที่ repo root)
+> ไม่ถูก build → จะได้ 404 ทุก request (Vercel ต้องเห็นทั้ง `client/` และ `api/`)
 
-เซิร์ฟเวอร์เปิด CORS แบบ `origin: true` อยู่แล้ว จึงเรียกข้ามโดเมนได้เลย
+> 💡 ถ้าอยากแยก client กับ API จริง ๆ (เช่นเอา API ไป Render/Railway) ให้ตั้ง `VITE_API_URL`
+> ไว้ใน Vercel ได้ — โค้ดรองรับอยู่แล้ว (`client/src/lib/api.ts`)
+
+**ถ้าอยาก self-host แบบมี server จริง (Express)** — `server/src/index.ts` เป็น adapter บาง ๆ ที่ห่อ logic ชุดเดียวกับ function
+- start: `npm --prefix server run start` · port `8787` · env: `DATABASE_URL`, `JWT_SECRET`
+- รองรับอัปโหลดรูป (Express เท่านั้น — serverless เขียนไฟล์ไม่ได้ ระบบจะซ่อนตัวเลือกนี้ให้อัตโนมัติ)
+
+> หมายเหตุ: ถ้า `/api/health` ตอบ `uploads: false` หน้าลงประกาศจะซ่อนช่องอัปโหลดรูปให้เอง
+> (การ deploy แบบ serverless เขียนไฟล์ลงดิสก์ไม่ได้)
 
 > ถ้ายังไม่ได้ deploy API: ปล่อยแค่ Vercel ไว้ หน้าเว็บจะขึ้นแถบแดง `🔌 เชื่อมต่อ API ไม่ได้`
 > พร้อมปุ่ม "ลองใหม่" (ตรวจทุก 10 วินาทีและกลับมาออนไลน์เองเมื่อ API ฟื้น)
@@ -256,20 +254,23 @@ npm run test   # unit + e2e ครบ
 .
 ├── package.json              # concurrently: รันทั้ง API + WEB + สคริปต์ test ทั้งหมด
 ├── playwright.config.ts      # E2E (chromium + mobile) + webServer
+├── vercel.json               # deploy เว็บ + API พร้อมกัน (ครั้งเดียว)
+├── api/[[...path]].ts        # 🚀 Vercel Serverless Function — จับทุก /api/*
 ├── .github/workflows/        # CI (ci.yml) + CD (cd.yml)
 ├── tests/e2e/                # Playwright specs + fixtures + global-setup
+├── scripts/check.mjs         # ตัวตรวจว่า API + เว็บทำงานไหม
 ├── server/
 │   ├── .env.example
 │   ├── sql/schema.sql        # DDL ทั้งหมด (users/items/categories/claims/notifications/watches/reviews/messages)
-│   ├── uploads/              # รูปที่อัปโหลด (เสิร์ฟ static ที่ /uploads)
+│   ├── uploads/              # รูปที่อัปโหลด (เฉพาะตอนรันด้วย Express)
 │   └── src/
-│       ├── index.ts          # ตั้ง middleware + mount route
-│       ├── auth.ts           # JWT sign/verify, requireAuth, requireAdmin
-│       ├── upload.ts         # multer (รูปอย่างเดียว, ≤ 4MB)
+│       ├── api.ts            # ⭐ ตรรกะ API ทั้งหมด (framework-agnostic) ใช้ร่วมกันทั้ง 2 แบบ
+│       ├── index.ts          # adapter สำหรับ dev ในเครื่อง (Express, บางมาก)
+│       ├── upload.ts         # multer (รูปอย่างเดียว, ≤ 4MB) — ใช้ตอน dev เท่านั้น
 │       ├── types.ts          # type กลาง + interface Store
 │       ├── data/
 │       │   ├── categories.ts # 9 หมวดหมู่
-│       │   └── demo.ts       # ข้อมูลตัวอย่างตอน demo mode
+│       │   └── demo.ts       # ข้อมูลตัวอย่างตอน demo mode + seed
 │       ├── db/
 │       │   ├── index.ts      # เลือก driver (neon | memory)
 │       │   ├── store.neon.ts # SQL จริงทั้งหมด
@@ -277,18 +278,15 @@ npm run test   # unit + e2e ครบ
 │       │   ├── store.test.ts # unit test ของ business logic
 │       │   ├── push.ts       # npm run db:push
 │       │   └── seed.ts       # npm run db:seed
-│       └── routes/
-│           ├── auth.routes.ts
-│           ├── items.routes.ts
-│           ├── claims.routes.ts  # + notifyRouter
-│           └── extra.routes.ts   # watches / reviews / messages / admin
+│       └── api.test.ts       # unit test ของ API core (16 เคส)
+
 └── client/
     └── src/
         ├── style.css         # Tailwind v4 theme, keyframes, utility
         ├── types.ts          # type ฝั่ง client
-        ├── lib/              # api.ts (fetch wrapper), format.ts (เวลาไทย/สถานะ)
-        ├── stores/           # auth, items, social, toast, extras (watchlist/chat/review), theme
-        ├── components/       # AppHeader, MobileTabBar, ItemCard, ChatPanel, ReviewModal, RepBadge, Toaster, ...
+        ├── lib/              # api.ts (fetch wrapper + VITE_API_URL), format.ts (เวลาไทย/สถานะ)
+        ├── stores/           # auth, items, social, toast, extras (watchlist/chat/review), theme, health
+        ├── components/       # AppHeader, MobileTabBar, ItemCard, ChatPanel, ReviewModal, RepBadge, ApiOfflineBanner, Toaster, ...
         └── views/            # Landing, Home, ItemDetail, Report, MySpace, Watch, Admin, Profile, Login, Register, NotFound
 ```
 
