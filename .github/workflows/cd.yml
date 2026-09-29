@@ -35,6 +35,7 @@ jobs:
       - name: Deploy
         run: npx vercel deploy --prebuilt --prod --token "${{ secrets.VERCEL_TOKEN }}" || echo "ปรับ VERCEL_ORG_ID / VERCEL_PROJECT_ID ถ้าจำเป็น"
 
+
   deploy-api:
     name: 🚀 Deploy API (Render)
     runs-on: ubuntu-latest

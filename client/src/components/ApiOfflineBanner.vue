@@ -18,9 +18,12 @@ onUnmounted(() => health.stop())
         <p class="flex items-start gap-2 text-xs leading-relaxed text-rose-100 sm:text-sm">
           <span class="text-base leading-none">🔌</span>
           <span>
-            <strong class="font-extrabold">เชื่อมต่อ API ไม่ได้</strong> — เซิร์ฟเวอร์ยังไม่ทำงาน
-            (หน้าเว็บเปิดได้แต่ข้อมูลโหลดไม่ขึ้น) ลองรันคำสั่งนี้ในโปรเจกต์:
+            <strong class="font-extrabold">เชื่อมต่อ API ไม่ได้</strong> — หน้าเว็บเปิดได้แต่ข้อมูลโหลดไม่ขึ้น
+            <span class="hidden sm:inline">ลองรันคำสั่งนี้ในโปรเจกต์:</span>
             <code class="rounded-lg bg-black/30 px-2 py-0.5 font-mono text-[11px]">npm run dev</code>
+            <span v-if="health.lastChecked" class="ml-1 text-[11px] text-rose-200/70">
+              (ตรวจล่าสุด {{ new Date(health.lastChecked).toLocaleTimeString('th-TH') }})
+            </span>
           </span>
         </p>
         <button

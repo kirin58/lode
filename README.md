@@ -114,11 +114,26 @@ npm run dev
 
 ```bash
 npm run typecheck      # tsc (server) + vue-tsc (client)
+npm run check          # เช็คว่า API + เว็บทำงานอยู่ไหม
 npm run test:unit      # Vitest: 45 unit tests
-npm run test:e2e       # Playwright: 30 E2E tests (เปิด server ให้เองอัตโนมัติ)
+npm run test:e2e       # Playwright: 30 E2E tests (เปิดเซิร์ฟเวอร์แยกพอร์ตให้เอง)
 npm run test           # unit + e2e ทั้งหมด
 npm run build          # server (tsc) + client (vite)
 ```
+
+### 🚦 พอร์ต (แยกกันเพื่อไม่ให้เทสต์ชนกับ dev server)
+
+| | เว็บ | API |
+| --- | --- | --- |
+| ใช้งานปกติ `npm run dev` | 5173 | 8787 |
+| E2E `npm run test:e2e` | 5175 | 8788 |
+
+รัน `npm run dev` ไว้แล้วสั่ง `npm run test:e2e` ได้เลย — เทสต์เปิดเซิร์ฟเวอร์ของตัวเองที่อีกชุด
+และ **ไม่ไปแตะ dev server ของคุณ** (ปิดเทสต์แล้วแอปหลักยังรันต่อ)
+
+> 💡 ถ้าเห็นหน้าเว็บได้แต่ข้อมูลไม่โหลด (404 ทุก endpoint) แปลว่า **API ไม่ทำงาน**
+> หน้าเว็บจะขึ้นแถบแดง `🔌 เชื่อมต่อ API ไม่ได้` พร้อมปุ่ม "ลองใหม่" — แก้ด้วย `npm run dev`
+> (หรือ `npm run check` เพื่อตรวจสถานะก่อน)
 
 ---
 
@@ -154,7 +169,9 @@ npm run test:e2e:mobile    # เฉพาะ Pixel 7
 npm run test:e2e:report    # เปิด HTML report
 ```
 
-`playwright.config.ts` จะ**เปิด API + เว็บเองอัตโนมัติ** (`webServer`) และปิด `DATABASE_URL` ให้ใช้ **demo mode** เพื่อให้ผลลัพธ์นิ่งและรันซ้ำได้ทุกครั้ง (บัญชี `demo@lostfound.app` / `joe@lostfound.app` รหัส `demo1234` ใช้ได้เลย)
+`playwright.config.ts` จะ**เปิด API + เว็บของตัวเอง** บนพอร์ตแยก (8788 / 5175) พร้อมปิด `DATABASE_URL` ให้ใช้ **demo mode**
+เพื่อให้ผลลัพธ์นิ่งและรันซ้ำได้ทุกครั้ง (บัญชี `demo@lostfound.app` / `joe@lostfound.app` รหัส `demo1234` ใช้ได้เลย)
+และไม่ไปกวน `npm run dev` ของคุณ
 
 ถ้าอยากเทสกับ **Neon จริง**: `E2E_NEON=1 npx playwright test` (จะ seed ข้อมูลตัวอย่างลงฐานข้อมูลก่อน)
 
@@ -188,8 +205,11 @@ npm run test:e2e:report    # เปิด HTML report
 | Secret | ใช้ทำอะไร |
 | --- | --- |
 | `DATABASE_URL` | (ไม่บังคับ) เปิด job ตรวจ schema กับ Neon จริง |
-| `VERCEL_TOKEN` | (ไม่บังคับ) deploy เว็บลง Vercel |
+| `VERCEL_TOKEN` | (ไม่บังคับ) deploy เว็บลง Vercel — **ต้องตั้ง `VITE_API_URL` ใน Vercel ด้วย** ไม่งั้นจะได้ 404 |
 | `RENDER_DEPLOY_HOOK` | (ไม่บังคับ) trigger deploy API บน Render |
+
+> 💡 `VITE_API_URL` เป็น **environment variable ของโปรเจกต์บน Vercel** (ไม่ใช่ของ GitHub Actions)
+> ค่าตัวอย่าง: `https://lost-found-api.onrender.com` (ต้อง deploy API ไปที่ Render/Railway ก่อน)
 
 **รันในเครื่องแบบเดียวกับ CI**
 ```bash
@@ -198,9 +218,34 @@ npm run test   # unit + e2e ครบ
 ```
 
 **Deploy เอง (ถ้าไม่อยากใช้ GitHub Actions)**
-- **Client** → Vercel / Netlify: build `npm --prefix client run build`, output `client/dist`, ใส่ rewrite ทุก path → `index.html` (เพราะใช้ history mode)
-- **Server** → Render / Railway / Fly.io: start `npm --prefix server run start`, port 8787, ใส่ env `DATABASE_URL`, `JWT_SECRET`
-- อย่าลืมตั้ง CORS ให้โดเมนของ client (เซิร์ฟเวอร์เปิด `origin: true` อยู่แล้ว)
+
+> ⚠️ **สำคัญ: client กับ API เป็นคนละตัวกัน** — ถ้า deploy เว็บไปที่ Vercel แต่ไม่ได้ตั้ง `VITE_API_URL`
+> เว็บจะยิง `/api/...` ไปที่ตัวเองแล้วได้ **404** (เพราะไม่มี API บนโดเมนนั้น)
+
+**1) Deploy API (Express) ก่อน** — Render / Railway / Fly.io
+- start command: `npm --prefix server run start`
+- port: `8787` (Render จะให้ค่า PORT มาให้ใช้เอง)
+- env: `DATABASE_URL`, `JWT_SECRET`
+- ได้ URL เช่น `https://lost-found-api.onrender.com`
+
+**2) Deploy client (Vue)** — Vercel / Netlify
+- build: `npm --prefix client run build`
+- output: `client/dist`
+- **environment variable**: `VITE_API_URL=https://lost-found-api.onrender.com`
+- rewrite ทุก path → `index.html` (history mode) เช่น Vercel ใส่ใน `vercel.json`:
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "buildCommand": "npm --prefix client run build",
+  "outputDirectory": "client/dist"
+}
+```
+
+เซิร์ฟเวอร์เปิด CORS แบบ `origin: true` อยู่แล้ว จึงเรียกข้ามโดเมนได้เลย
+
+> ถ้ายังไม่ได้ deploy API: ปล่อยแค่ Vercel ไว้ หน้าเว็บจะขึ้นแถบแดง `🔌 เชื่อมต่อ API ไม่ได้`
+> พร้อมปุ่ม "ลองใหม่" (ตรวจทุก 10 วินาทีและกลับมาออนไลน์เองเมื่อ API ฟื้น)
 
 ---
 

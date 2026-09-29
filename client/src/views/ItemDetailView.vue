@@ -5,7 +5,7 @@ import ItemCard from '@/components/ItemCard.vue'
 import ChatPanel from '@/components/ChatPanel.vue'
 import ReviewModal from '@/components/ReviewModal.vue'
 import RepBadge from '@/components/RepBadge.vue'
-import { api, ApiError } from '@/lib/api'
+import { api, ApiError, apiUrl } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useSocialStore } from '@/stores/social'
 import { useExtrasStore } from '@/stores/extras'
@@ -184,7 +184,7 @@ watch(() => route.params.id, load)
           <div class="absolute inset-0 dotgrid opacity-30" />
           <img
             v-if="item.image_url"
-            :src="item.image_url"
+            :src="apiUrl(item.image_url)"
             :alt="item.title"
             class="relative h-full w-full object-cover"
           />

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Item } from '@/types'
+import { apiUrl } from '@/lib/api'
 import { KIND_META, STATUS_META, CATEGORY_CHIP, timeAgo, baht } from '@/lib/format'
 
 const props = defineProps<{ item: Item }>()
@@ -26,7 +27,7 @@ const emoji = computed(() => props.item.category?.emoji ?? '✨')
       <div class="absolute inset-0 dotgrid opacity-30" />
       <img
         v-if="item.image_url"
-        :src="item.image_url"
+        :src="apiUrl(item.image_url)"
         :alt="item.title"
         loading="lazy"
         class="relative h-full w-full object-cover transition duration-500 group-hover:scale-110"
