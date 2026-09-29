@@ -66,7 +66,11 @@ async function submit() {
     toast.party('ยินดีต้อนรับ!', `สวัสดี ${user.display_name} เข้าสู่โลกการคืนของแล้ว 🎉`)
     router.push((route.query.redirect as string) ?? '/browse')
   } catch (err) {
-    fail(err instanceof ApiError ? err.message : 'สมัครไม่สำเร็จ ลองใหม่นะ')
+    fail(
+      err instanceof ApiError
+        ? err.message
+        : 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ — ตรวจสอบว่า API กำลังรันอยู่ไหม (npm run dev)'
+    )
   }
 }
 

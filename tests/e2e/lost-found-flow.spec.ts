@@ -54,7 +54,9 @@ test.describe('วงจรคืนของครบสาย (report → clai
     await expect(helper.getByText('ขอบคุณสำหรับรีวิว!')).toBeVisible()
 
     await owner.reload()
-    await expect(owner.getByText('ดีมาก!')).toBeVisible()
+    // เจ้าของเห็นคะแนนรีวิวจากผู้ช่วยในป้ายความน่าเชื่อถือ
+    await expect(owner.getByText(/1 รีวิว/)).toBeVisible()
+    await expect(owner.getByText('คนน่าเชื่อถือ').first()).toBeVisible()
 
     await ownerCtx.close()
     await helperCtx.close()
