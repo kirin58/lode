@@ -6,8 +6,9 @@ test.describe('หน้าแรก + การค้นหา', () => {
 
     await expect(page).toHaveTitle(/Lost & Found/)
     await expect(page.getByRole('heading', { level: 1 })).toContainText('ของหาย')
-    await expect(page.getByText('ประกาศในระบบ')).toBeVisible()
-    await expect(page.getByText('คืนสำเร็จ').first()).toBeVisible()
+    // การ์ดสถิติในหน้าแรก (กรองเฉพาะตัวที่มองเห็นจริง เพราะมี badge ที่ซ่อนบนมือถือ)
+    await expect(page.getByText('ประกาศในระบบ').filter({ visible: true })).toBeVisible()
+    await expect(page.getByText('คืนสำเร็จ', { exact: true }).filter({ visible: true }).first()).toBeVisible()
     await expect(page.locator('a[href^="/item/"]')).not.toHaveCount(0)
   })
 
