@@ -1,0 +1,18 @@
+{
+  "name": "lost-and-found",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Lost & Found สำหรับมหาวิทยาลัย — Vue 3 + Tailwind CSS + Neon (Postgres)",
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c magenta,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix server run build && npm --prefix client run build",
+    "preview": "npm --prefix client run preview",
+    "typecheck": "npm --prefix server run typecheck",
+    "db:push": "npm --prefix server run db:push"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
