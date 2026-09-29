@@ -1,4 +1,4 @@
-import { test, expect, registerAndLogin, login, typeInto, DEMO } from './fixtures'
+import { test, expect, registerAndLogin, login, typeInto, typeSlowly, DEMO } from './fixtures'
 
 test.describe('สมัครสมาชิก + เข้าสู่ระบบ', () => {
   test('สมัครสมาชิกใหม่แล้วเข้าไปหน้าค้นหาอัตโนมัติ', async ({ page }) => {
@@ -46,11 +46,11 @@ test.describe('สมัครสมาชิก + เข้าสู่ระ�
     const form = page.locator('form')
     const pw = page.getByPlaceholder('อย่างน้อย 8 ตัวอักษร')
 
-    await typeInto(pw, '123')
+    await typeSlowly(pw, '123')
     await expect(form).toContainText(/อ่อนมาก|ยังไม่น่าเชื่อถือ/)
 
     await pw.fill('')
-    await typeInto(pw, 'Str0ng-P@ssw0rd-2026!')
+    await typeSlowly(pw, 'Str0ng-P@ssw0rd-2026!')
     await expect(form).toContainText('แข็งแรงมาก')
   })
 

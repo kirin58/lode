@@ -65,8 +65,8 @@ test.describe('👑 หน้าแอดมิน', () => {
     await page.goto('/admin')
 
     await expect(page.getByRole('heading', { level: 1 })).toContainText('สถิติทั้งระบบ')
-    await expect(page.getByText('ประกาศทั้งหมด')).toBeVisible()
-    await expect(page.getByText('อัตราสำเร็จ')).toBeVisible()
+    await expect(page.getByText('ประกาศทั้งหมด').first()).toBeVisible()
+    await expect(page.getByText('อัตราสำเร็จ').first()).toBeVisible()
     await expect(page.getByText('ประกาศ 14 วันล่าสุด')).toBeVisible()
     await expect(page.getByText('ฮีโร่คืนของ')).toBeVisible()
     await expect(page.getByText('หมวดที่คนลงประกาศเยอะ')).toBeVisible()
