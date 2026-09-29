@@ -61,6 +61,7 @@ function switchKind(next: ItemKind) {
 }
 
 async function submit() {
+  if (submitting.value) return // กัน double-submit (คลิกรัว ๆ แล้วสร้างประกาศซ้ำ)
   error.value = ''
   if (title.value.trim().length < 3) {
     error.value = 'ใส่ชื่อของอย่างน้อย 3 ตัวอักษรหน่อยนะ'

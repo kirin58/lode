@@ -32,7 +32,7 @@ test.describe('⭐ Watchlist + แจ้งเตือนอัตโนมั�
 
     await watcher.reload()
     await watcher.getByRole('button', { name: 'การแจ้งเตือน' }).click()
-    await expect(watcher.getByText(/มีประกาศใหม่ที่คุณติดตาม/)).toBeVisible()
+    await expect(watcher.getByText(/มีประกาศใหม่ที่คุณติดตาม/).first()).toBeVisible()
     await expect(watcher.getByText(/E2Eจับตา/).first()).toBeVisible()
 
     // ลบ watchlist

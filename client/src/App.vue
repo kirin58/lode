@@ -2,6 +2,7 @@
 import { RouterView, useRoute } from 'vue-router'
 import Blobs from '@/components/Blobs.vue'
 import AppHeader from '@/components/AppHeader.vue'
+import ApiOfflineBanner from '@/components/ApiOfflineBanner.vue'
 import MobileTabBar from '@/components/MobileTabBar.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import Toaster from '@/components/Toaster.vue'
@@ -13,6 +14,7 @@ const route = useRoute()
   <Blobs />
   <div class="flex min-h-dvh flex-col">
     <AppHeader />
+    <ApiOfflineBanner />
 
     <main class="flex-1 pb-28 sm:pb-16">
       <RouterView v-slot="{ Component }">

@@ -7,6 +7,8 @@
     "dev": "concurrently -n API,WEB -c magenta,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
+    "dev:e2e": "concurrently -n E2E-API,E2E-WEB -c yellow,green \"npm --prefix server run dev\" \"npm --prefix client run dev -- --port 5175 --strictPort\"",
+    "check": "node scripts/check.mjs",
     "build": "npm --prefix server run build && npm --prefix client run build",
     "preview": "npm --prefix client run preview",
     "typecheck": "npm --prefix server run typecheck && npm --prefix client run typecheck",

@@ -1,5 +1,8 @@
 import { test as base, expect, type Page, type Locator } from '@playwright/test'
 
+/** API ของเซิร์ฟเวอร์ทดสอบ (แยกพอร์ตจาก dev server ปกติ) */
+export const API = process.env.E2E_API_URL ?? 'http://localhost:8788'
+
 export const DEMO = {
   email: 'demo@lostfound.app',
   password: 'demo1234',

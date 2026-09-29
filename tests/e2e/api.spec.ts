@@ -1,6 +1,4 @@
-import { test, expect } from './fixtures'
-
-const API = 'http://localhost:8787'
+import { test, expect, API } from './fixtures'
 
 test.describe('REST API (contract)', () => {
   test('health บอก driver ที่ใช้งาน', async ({ request }) => {
