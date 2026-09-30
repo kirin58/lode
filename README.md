@@ -2,8 +2,8 @@
 
 แอปแจ้งของหาย / ของเจอ สำหรับนักศึกษา สร้างด้วย **Vue 3 + TypeScript + Tailwind CSS v4** และเชื่อมฐานข้อมูล **Neon (PostgreSQL Serverless)**
 
-> 🚀 **Deploy ครั้งเดียวบน Vercel** — เว็บ (Vue) + API (Serverless Functions) อยู่โดเมนเดียวกัน
-> ไม่ต้องมี server แยก และไม่ต้องตั้ง `VITE_API_URL` เพราะ client ยิง `/api/...` ไปที่ตัวเอง
+> 🚀 **Deploy ครั้งเดียวบน Firebase** — เว็บ (Hosting) + API (Cloud Functions) อยู่โดเมนเดียวกัน
+> ดูขั้นตอนในหัวข้อ Deploy ข้างล่าง (ต้องมี Project ID + Blaze plan + secrets)
 
 UI แนว Gen-Z: gradient สด ๆ, glassmorphism, ฟอนต์ Outfit + Noto Sans Thai, การ์ดมน ๆ, สติกเกอร์หมวดหมู่, toast และแอนิเมชันลอย ๆ
 พร้อม **ธีมมืด/สว่าง**, แชทเรียลไทม์, watchlist แจ้งเตือนอัตโนมัติ, ระบบรีวิว+คะแนนความน่าเชื่อถือ, แดชบอร์ดแอดมิน
@@ -206,10 +206,11 @@ npm run test:e2e:report    # เปิด HTML report
 | --- | --- |
 | `.github/workflows/ci.yml` | 5 jobs: **Typecheck** → **Unit tests** → **Build** → **E2E (Playwright)** → **Neon schema check** (ถ้ามี secret) |
 
-> หมายเหตุ: ไม่มี CD workflow แยก — Vercel deploy อัตโนมัติทุกครั้งที่ push ขึ้น `main` อยู่แล้ว
+> หมายเหตุ: ไม่มี CD workflow แยก — Firebase deploy อัตโนมัติทุกครั้งที่ push ขึ้น `main`
+> (ถ้าเปิด GitHub integration) หรือสั่ง `npm run deploy` เองก็ได้
 
 **รายละเอียด**
-- ทุก job ติดตั้ง dependency เอง (`npm ci` ที่ root + `npm --prefix client ci`)
+- ทุก job ติดตั้ง dependency เอง (`npm ci` ที่ root + `functions/`)
 - E2E ติดตั้งเฉพาะ Chromium เพื่อความเร็ว (`npx playwright install --with-deps chromium`) และอัปโหลด `playwright-report` เป็น artifact
 - ถ้าไม่มี `DATABASE_URL` ใน CI → เซิร์ฟเวอร์ใช้ demo mode ทำให้เทสต์ไม่ต้องพึ่งฐานข้อมูลภายนอก
 - Job `neon-schema-check` จะรันเฉพาะเมื่อมี secret `DATABASE_URL` — ใช้ `npm run db:push` กับฐานข้อมูลจริงเพื่อยืนยันว่า schema ใช้ได้
@@ -220,7 +221,8 @@ npm run test:e2e:report    # เปิด HTML report
 | --- | --- |
 | `DATABASE_URL` | (ไม่บังคับ) เปิด job ตรวจ schema กับ Neon จริง |
 
-> `DATABASE_URL` กับ `JWT_SECRET` ของตัวเว็บ production ตั้งใน **Vercel → Project Settings → Environment Variables** (คนละที่กับตารางข้างบน)
+> `DATABASE_URL` กับ `JWT_SECRET` ของตัวเว็บ production ตั้งด้วยคำสั่ง
+> `firebase functions:secrets:set DATABASE_URL JWT_SECRET` (คนละที่กับตารางข้างบน)
 
 **รันในเครื่องแบบเดียวกับ CI**
 ```bash
@@ -228,21 +230,21 @@ npm run ci     # typecheck + unit + build
 npm run test   # unit + e2e ครบ
 ```
 
-**Deploy ครั้งเดียวที่ Vercel** — เว็บ + API อยู่โดเมนเดียวกัน (ไม่ต้องมี server แยก)
+**Deploy ครั้งเดียวที่ Firebase** — เว็บ (Hosting) + API (Cloud Functions) อยู่โดเมนเดียวกัน
 
-| ขั้นตอน | ทำอะไร |
+```bash
+npm i -g firebase-tools
+firebase login
+firebase deploy --only hosting,functions   # หรือ npm run deploy
+```
+
+| สิ่งที่ต้องเตรียม | ทำที่ไหน |
 | --- | --- |
-| 1. Import โปรเจกต์ | เชื่อม GitHub repo → Vercel (**Root Directory = เอาออก / repo root**) |
-| 2. Environment Variables | `DATABASE_URL` (จาก Neon) · `JWT_SECRET` (สตริงยาว ๆ 32 ตัว) |
-| 3. Deploy | เสร็จ! เว็บที่ `https://<โปรเจกต์>.vercel.app` ใช้ได้ทันที |
+| Firebase project | [console.firebase.google.com](https://console.firebase.google.com) → Add project → จด **Project ID** มาใส่ `.firebaserc` |
+| Blaze plan (จ่ายตามใช้) | Console → Upgrade — **บังคับ** เพราะ Cloud Functions + ต่อ Neon (นอก Google) ต้องใช้เน็ตขาออก |
+| Secrets | `firebase functions:secrets:set DATABASE_URL JWT_SECRET` (+ `AWS_*`/`S3_BUCKET` ถ้าเปิดอัปโหลดรูป) |
 
-`vercel.json` ที่ root จัดการให้อัตโนมัติ: build client, rewrite SPA (ยกเว้น `/api`) และ cache assets
-
-> ❌ **อย่าตั้ง Root Directory = `client`** เพราะจะทำให้ `api/[...path].ts` (โฟลเดอร์ `api/` ที่ repo root)
-> ไม่ถูก build → จะได้ 404 ทุก request (Vercel ต้องเห็นทั้ง `client/` และ `api/`)
-
-> 💡 ถ้าอยากแยก client กับ API จริง ๆ (เช่นเอา API ไป Render/Railway) ให้ตั้ง `VITE_API_URL`
-> ไว้ใน Vercel ได้ — โค้ดรองรับอยู่แล้ว (`client/src/lib/api.ts`)
+`firebase.json` ที่ root จัดการให้อัตโนมัติ: build เว็บไป `dist`, rewrite `/api/**` → function `api` (asia-southeast1), ที่เหลือ fallback `index.html` (SPA)
 
 **ถ้าอยาก self-host / dev แบบมี server จริง (Express)** — `scripts/dev-server.ts` เป็น adapter บาง ๆ ที่ห่อ logic ชุดเดียวกับ function (`npm run dev`)
 - รองรับอัปโหลดรูป (Express เท่านั้น — serverless เขียนไฟล์ไม่ได้ ระบบจะซ่อนตัวเลือกนี้ให้อัตโนมัติ)
@@ -276,14 +278,20 @@ npm run test   # unit + e2e ครบ
 │   ├── components/           # AppHeader, MobileTabBar, ItemCard, ChatPanel, ReviewModal, RepBadge, ApiOfflineBanner, Toaster, ...
 │   └── views/                # Landing, Home, ItemDetail, Report, MySpace, Watch, Admin, Profile, Login, Register, NotFound
 ├── public/favicon.svg        # ไฟล์ static (Vite เสิร์ฟให้เอง)
-├── api/[...path].ts          # 🚀 Vercel Serverless Function — จับทุก /api/*
-├── api/_lib/                 # backend ทั้งหมด (ไฟล์ใต้ _ ไม่ถูกเสิร์ฟเป็น route)
-│   ├── api.ts                # ⭐ ตรรกะ API ทั้งหมด ใช้ร่วมกันทั้ง Vercel + dev
-│   ├── api.test.ts           # unit test ของ API core
-│   ├── types.ts              # type กลาง + interface Store
-│   ├── data/                 # หมวดหมู่ 9 หมวด + ข้อมูล demo
-│   ├── db/                   # เลือก driver (neon | memory) + SQL + store.test.ts
-│   └── sql/schema.sql        # DDL ทั้ง 8 ตาราง
+├── firebase.json             # deploy เว็บ + API พร้อมกัน (hosting rewrites + functions predeploy)
+├── .firebaserc               # ผูก repo กับ Firebase Project ID
+├── functions/                # backend บน Cloud Functions (deploy ด้วย firebase deploy)
+│   ├── package.json          # deps ฝั่ง functions (ติดตั้งแยกใน functions/)
+│   ├── tsconfig.json         # build functions → lib/
+│   └── src/
+│       ├── index.ts          # 🚀 function `api` ตัวเดียว รับทุก /api/* (region asia-southeast1)
+│       └── lib/              # ⭐ ตรรกะ API ทั้งหมด ใช้ร่วมกันทั้ง functions + dev
+│           ├── api.ts        # handleRequest + routes ทั้งหมด
+│           ├── api.test.ts   # unit test ของ API core
+│           ├── types.ts      # type กลาง + interface Store
+│           ├── data/         # หมวดหมู่ 9 หมวด + ข้อมูล demo
+│           ├── db/           # เลือก driver (neon | memory) + SQL + store.test.ts
+│           └── sql/schema.sql# DDL ทั้ง 8 ตาราง
 ├── scripts/                  # dev-server (Express) + db-push + db-seed + db-clean + check
 ├── uploads/                  # รูปที่อัปโหลดตอน dev (gitignored เหลือแค่ .gitkeep)
 ├── .github/workflows/ci.yml  # CI: typecheck → unit → build → E2E → Neon check

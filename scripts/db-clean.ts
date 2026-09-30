@@ -12,7 +12,7 @@
  */
 import 'dotenv/config'
 import { neon } from '@neondatabase/serverless'
-import { DEMO_ITEMS } from '../api/_lib/data/demo.js'
+import { DEMO_ITEMS } from '../functions/src/lib/data/demo.js'
 
 const CONFIRM = process.argv.includes('--confirm')
 

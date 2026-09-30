@@ -11,15 +11,15 @@ export default defineConfig({
     reporters: ['default'],
     coverage: {
       provider: 'v8',
-      include: ['api/_lib/**/*.ts', 'src/lib/**/*.ts', 'src/stores/**/*.ts'],
-      exclude: ['**/*.test.ts', 'api/_lib/data/demo.ts'],
+      include: ['functions/src/lib/**/*.ts', 'src/lib/**/*.ts', 'src/stores/**/*.ts'],
+      exclude: ['**/*.test.ts', 'functions/src/lib/data/demo.ts'],
     },
     projects: [
       {
         test: {
           name: 'api',
           environment: 'node',
-          include: ['api/**/*.test.ts'],
+          include: ['functions/**/*.test.ts'],
         },
       },
       {

@@ -29,8 +29,12 @@ jobs:
           cache: npm
       - name: Install (root)
         run: npm ci
+      - name: Install (functions)
+        run: npm --prefix functions install
       - name: Typecheck
         run: npm run typecheck
+      - name: Typecheck (functions)
+        run: npm --prefix functions run typecheck
 
   # ─────────────────────────────────────────────
   # 2) Unit tests (Vitest)
@@ -45,6 +49,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm --prefix functions install
       - name: Unit tests (api + client)
         run: npm run test:unit
 
@@ -62,8 +67,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm --prefix functions install
       - name: Build client
         run: npm run build
+      - name: Build functions
+        run: npm --prefix functions run build
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

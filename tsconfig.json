@@ -9,13 +9,9 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "sourceMap": true
-    // หมายเหตุ: อย่าใส่ "types": ["node"] ตรงนี้ — Vercel แปลง function
-    // ใน isolated context แล้วหา type entry ไม่เจอ (TS2688) จน function หลุดจาก deploy
+    // หมายเหตุ: อย่าใส่ "types": ["node"] — เคยทำให้ Vercel bundling พัง (TS2688)
     // ค่า default ของ TS จะ include @types/* ให้เองอยู่แล้ว
   },
-  "include": ["api/**/*.ts", "scripts/**/*.ts"],
-  "references": [
-    { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.app.json" }
-  ]
+  "include": ["functions/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules", "functions/node_modules", "functions/lib"]
 }

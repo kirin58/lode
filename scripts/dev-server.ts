@@ -1,6 +1,6 @@
 /**
  * Dev server ในเครื่อง (Express) — ใช้ตอน `npm run dev` เท่านั้น
- * บน Vercel ใช้ api/[[...path]].ts แทน (logic ชุดเดียวกันใน api/_lib/api.ts)
+ * บน Firebase ใช้ functions/src/index.ts แทน (logic ชุดเดียวกันใน functions/src/lib/api.ts)
  */
 import 'dotenv/config'
 import express from 'express'
@@ -10,8 +10,8 @@ import { randomUUID } from 'node:crypto'
 import { extname } from 'node:path'
 import fs from 'node:fs'
 import path from 'node:path'
-import { getStore } from '../api/_lib/db/index.js'
-import { handleRequest, type ReqCtx } from '../api/_lib/api.js'
+import { getStore } from '../functions/src/lib/db/index.js'
+import { handleRequest, type ReqCtx } from '../functions/src/lib/api.js'
 
 /** อัปโหลดรูป — ใช้ตอน dev ในเครื่องเท่านั้น (บน Vercel เขียนไฟล์ไม่ได้) */
 const uploadDir = path.resolve('uploads')
