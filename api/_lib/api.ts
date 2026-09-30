@@ -2,8 +2,8 @@
  * API ทั้งหมดของ Lost & Found — เขียนแบบ framework-agnostic
  *
  * ใช้ร่วมกันได้ 2 แบบ (โค้ดชุดเดียว ไม่มี logic ซ้ำ):
- *   1) api/[[...path]].ts  → Vercel Serverless Function (deploy จริง)
- *   2) server/src/index.ts → Express adapter (dev ในเครื่อง / self-host ได้)
+ *   1) api/[...path].ts  → Vercel Serverless Function (deploy จริง)
+ *   2) scripts/dev-server.ts → Express adapter (dev ในเครื่อง / self-host ได้)
  */
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'

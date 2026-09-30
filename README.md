@@ -194,24 +194,22 @@ npm run test:e2e:report    # เปิด HTML report
 | ไฟล์ | ทำอะไร |
 | --- | --- |
 | `.github/workflows/ci.yml` | 5 jobs: **Typecheck** → **Unit tests** → **Build** → **E2E (Playwright)** → **Neon schema check** (ถ้ามี secret) |
-| `.github/workflows/cd.yml` | Deploy หลัง push เข้า `main`: เว็บ → Vercel, API → Render (deploy hook) |
+
+> หมายเหตุ: ไม่มี CD workflow แยก — Vercel deploy อัตโนมัติทุกครั้งที่ push ขึ้น `main` อยู่แล้ว
 
 **รายละเอียด**
-- ทุก job ติดตั้ง dependency เอง (`npm ci`) ทั้ง 3 package
+- ทุก job ติดตั้ง dependency เอง (`npm ci` ที่ root + `npm --prefix client ci`)
 - E2E ติดตั้งเฉพาะ Chromium เพื่อความเร็ว (`npx playwright install --with-deps chromium`) และอัปโหลด `playwright-report` เป็น artifact
 - ถ้าไม่มี `DATABASE_URL` ใน CI → เซิร์ฟเวอร์ใช้ demo mode ทำให้เทสต์ไม่ต้องพึ่งฐานข้อมูลภายนอก
 - Job `neon-schema-check` จะรันเฉพาะเมื่อมี secret `DATABASE_URL` — ใช้ `npm run db:push` กับฐานข้อมูลจริงเพื่อยืนยันว่า schema ใช้ได้
 
-**ตั้งค่า secrets** (Settings → Secrets and variables → Actions)
+**ตั้งค่า secrets** (GitHub → Settings → Secrets and variables → Actions)
 
 | Secret | ใช้ทำอะไร |
 | --- | --- |
 | `DATABASE_URL` | (ไม่บังคับ) เปิด job ตรวจ schema กับ Neon จริง |
-| `VERCEL_TOKEN` | (ไม่บังคับ) deploy เว็บลง Vercel — **ต้องตั้ง `VITE_API_URL` ใน Vercel ด้วย** ไม่งั้นจะได้ 404 |
-| `RENDER_DEPLOY_HOOK` | (ไม่บังคับ) trigger deploy API บน Render |
 
-> 💡 `VITE_API_URL` เป็น **environment variable ของโปรเจกต์บน Vercel** (ไม่ใช่ของ GitHub Actions)
-> ค่าตัวอย่าง: `https://lost-found-api.onrender.com` (ต้อง deploy API ไปที่ Render/Railway ก่อน)
+> `DATABASE_URL` กับ `JWT_SECRET` ของตัวเว็บ production ตั้งใน **Vercel → Project Settings → Environment Variables** (คนละที่กับตารางข้างบน)
 
 **รันในเครื่องแบบเดียวกับ CI**
 ```bash
@@ -229,14 +227,13 @@ npm run test   # unit + e2e ครบ
 
 `vercel.json` ที่ root จัดการให้อัตโนมัติ: build client, rewrite SPA (ยกเว้น `/api`) และ cache assets
 
-> ❌ **อย่าตั้ง Root Directory = `client`** เพราะจะทำให้ `api/[[...path]].ts` (โฟลเดอร์ `api/` ที่ repo root)
+> ❌ **อย่าตั้ง Root Directory = `client`** เพราะจะทำให้ `api/[...path].ts` (โฟลเดอร์ `api/` ที่ repo root)
 > ไม่ถูก build → จะได้ 404 ทุก request (Vercel ต้องเห็นทั้ง `client/` และ `api/`)
 
 > 💡 ถ้าอยากแยก client กับ API จริง ๆ (เช่นเอา API ไป Render/Railway) ให้ตั้ง `VITE_API_URL`
 > ไว้ใน Vercel ได้ — โค้ดรองรับอยู่แล้ว (`client/src/lib/api.ts`)
 
-**ถ้าอยาก self-host แบบมี server จริง (Express)** — `server/src/index.ts` เป็น adapter บาง ๆ ที่ห่อ logic ชุดเดียวกับ function
-- start: `npm --prefix server run start` · port `8787` · env: `DATABASE_URL`, `JWT_SECRET`
+**ถ้าอยาก self-host / dev แบบมี server จริง (Express)** — `scripts/dev-server.ts` เป็น adapter บาง ๆ ที่ห่อ logic ชุดเดียวกับ function (`npm run dev`)
 - รองรับอัปโหลดรูป (Express เท่านั้น — serverless เขียนไฟล์ไม่ได้ ระบบจะซ่อนตัวเลือกนี้ให้อัตโนมัติ)
 
 > หมายเหตุ: ถ้า `/api/health` ตอบ `uploads: false` หน้าลงประกาศจะซ่อนช่องอัปโหลดรูปให้เอง
@@ -251,33 +248,23 @@ npm run test   # unit + e2e ครบ
 
 ```
 .
-├── package.json              # concurrently: รันทั้ง API + WEB + สคริปต์ test ทั้งหมด
+├── package.json              # deps backend + scripts ทั้งหมด (dev/test/db)
+├── tsconfig.json + vitest.config.ts  # typecheck + unit test ฝั่ง api
 ├── playwright.config.ts      # E2E (chromium + mobile) + webServer
 ├── vercel.json               # deploy เว็บ + API พร้อมกัน (ครั้งเดียว)
-├── api/[[...path]].ts        # 🚀 Vercel Serverless Function — จับทุก /api/*
-├── .github/workflows/        # CI (ci.yml) + CD (cd.yml)
-├── tests/e2e/                # Playwright specs + fixtures + global-setup
-├── scripts/check.mjs         # ตัวตรวจว่า API + เว็บทำงานไหม
-├── server/
-│   ├── .env.example
-│   ├── sql/schema.sql        # DDL ทั้งหมด (users/items/categories/claims/notifications/watches/reviews/messages)
-│   ├── uploads/              # รูปที่อัปโหลด (เฉพาะตอนรันด้วย Express)
-│   └── src/
-│       ├── api.ts            # ⭐ ตรรกะ API ทั้งหมด (framework-agnostic) ใช้ร่วมกันทั้ง 2 แบบ
-│       ├── index.ts          # adapter สำหรับ dev ในเครื่อง (Express, บางมาก)
-│       ├── upload.ts         # multer (รูปอย่างเดียว, ≤ 4MB) — ใช้ตอน dev เท่านั้น
-│       ├── types.ts          # type กลาง + interface Store
-│       ├── data/
-│       │   ├── categories.ts # 9 หมวดหมู่
-│       │   └── demo.ts       # ข้อมูลตัวอย่างตอน demo mode + seed
-│       ├── db/
-│       │   ├── index.ts      # เลือก driver (neon | memory)
-│       │   ├── store.neon.ts # SQL จริงทั้งหมด
-│       │   ├── store.memory.ts
-│       │   ├── store.test.ts # unit test ของ business logic
-│       │   ├── push.ts       # npm run db:push
-│       │   └── seed.ts       # npm run db:seed
-│       └── api.test.ts       # unit test ของ API core (16 เคส)
+├── .env / .env.example       # DATABASE_URL (Neon) + JWT_SECRET
+├── api/[...path].ts          # 🚀 Vercel Serverless Function — จับทุก /api/*
+├── api/_lib/                 # backend ทั้งหมด (ไฟล์ใต้ _ ไม่ถูกเสิร์ฟเป็น route)
+│   ├── api.ts                # ⭐ ตรรกะ API ทั้งหมด ใช้ร่วมกันทั้ง Vercel + dev
+│   ├── api.test.ts           # unit test ของ API core
+│   ├── types.ts              # type กลาง + interface Store
+│   ├── data/                 # หมวดหมู่ 9 หมวด + ข้อมูล demo
+│   ├── db/                   # เลือก driver (neon | memory) + SQL + store.test.ts
+│   └── sql/schema.sql        # DDL ทั้ง 8 ตาราง
+├── scripts/                  # dev-server (Express) + db-push + db-seed + check
+├── uploads/                  # รูปที่อัปโหลดตอน dev (gitignored เหลือแค่ .gitkeep)
+├── .github/workflows/ci.yml  # CI: typecheck → unit → build → E2E → Neon check
+└── tests/e2e/                # Playwright specs + fixtures + global-setup
 
 └── client/
     └── src/
@@ -344,7 +331,7 @@ npm run test   # unit + e2e ครบ
 
 - **Demo mode**: ถ้าไม่ตั้ง `DATABASE_URL` เซิร์ฟเวอร์จะใช้ข้อมูลใน memory พร้อมข้อมูลตัวอย่าง 18 ประกาศ + บัญชีเดโม 8 คน (รหัสผ่าน `demo1234`) ข้อมูลจะหายเมื่อรีสตาร์ท — ใช้ดู UI เท่านั้น
 - **Neon**: ตั้ง `DATABASE_URL` ใน `.env` (ที่ root) แล้วรัน `npm run db:push && npm run db:seed` เพื่อสร้างตาราง + ข้อมูลตัวอย่าง (idempotent รันซ้ำได้)
-- **รูปภาพ** เก็บเป็นไฟล์ใน `uploads/` เสิร์ฟที่ `/uploads/*` (เฉพาะตอน dev ในเครื่อง — ถ้าต้องการเก็บลง Neon S3 / S3 ให้เปลี่ยน `scripts/upload.ts`)
+- **รูปภาพ** เก็บเป็นไฟล์ใน `uploads/` เสิร์ฟที่ `/uploads/*` (เฉพาะตอน dev ในเครื่อง — โค้ดอัปโหลดอยู่ใน `scripts/dev-server.ts`)
 - **รหัสผ่าน** เก็บเป็น bcrypt hash, token เป็น JWT 7 วัน เก็บใน `localStorage`
 - ตัวเลขในหน้าแรกนับจาก `/api/items/stats` จริง
 

@@ -5,10 +5,31 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import multer from 'multer'
+import { randomUUID } from 'node:crypto'
+import { extname } from 'node:path'
+import fs from 'node:fs'
 import path from 'node:path'
 import { getStore } from '../api/_lib/db/index.js'
 import { handleRequest, type ReqCtx } from '../api/_lib/api.js'
-import { upload } from './upload.js'
+
+/** อัปโหลดรูป — ใช้ตอน dev ในเครื่องเท่านั้น (บน Vercel เขียนไฟล์ไม่ได้) */
+const uploadDir = path.resolve('uploads')
+fs.mkdirSync(uploadDir, { recursive: true })
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => {
+      const ext = extname(file.originalname) || '.jpg'
+      cb(null, `${Date.now()}-${randomUUID().slice(0, 8)}${ext}`)
+    },
+  }),
+  limits: { fileSize: 4 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/^image\//.test(file.mimetype)) cb(null, true)
+    else cb(new Error('อัปโหลดได้แค่รูปภาพเท่านั้นนะ'))
+  },
+})
 
 const app = express()
 const PORT = Number(process.env.PORT ?? 8787)
