@@ -37,6 +37,8 @@ const PORT = Number(process.env.PORT ?? 8787)
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.json({ limit: '4mb' }))
 app.use('/uploads', express.static(path.resolve('uploads')))
+// รูป local ถูกอ้างเป็น /api/uploads/* ผ่าน apiUrl() ฝั่ง client → เสิร์ฟที่เดียวกัน
+app.use('/api/uploads', express.static(path.resolve('uploads')))
 
 /** จับทุกคำขอ /api/* แล้วส่งต่อไปที่ตรรกะกลาง */
 app.all(/^\/api(\/.*)?$/, upload.single('image'), async (req, res) => {

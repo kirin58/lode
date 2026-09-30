@@ -67,6 +67,7 @@ describe('api client', () => {
 
   it('apiUrl รองรับทั้ง relative และ absolute', () => {
     expect(apiUrl('/uploads/a.jpg')).toBe('/api/uploads/a.jpg')
+    expect(apiUrl('/api/images/abc.jpg')).toBe('/api/images/abc.jpg')
     expect(apiUrl('https://cdn.example.com/a.jpg')).toBe('https://cdn.example.com/a.jpg')
     expect(apiUrl('')).toBe('')
   })

@@ -12,6 +12,8 @@ export function apiUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) return path
   if (path.startsWith('blob:') || path.startsWith('data:')) return path
   const suffix = path.startsWith('/') ? path : `/${path}`
+  // path ที่ขึ้นต้นด้วย base อยู่แล้ว (เช่น /api/images/x) ห้ามเติมซ้ำ
+  if (suffix === API_BASE || suffix.startsWith(`${API_BASE}/`)) return suffix
   return `${API_BASE}${suffix}`
 }
 
