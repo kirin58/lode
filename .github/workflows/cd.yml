@@ -1,6 +1,6 @@
 name: CD
 
-# ปล่อยอัตโนมัติเมื่อ main ผ่าน CI → deploy client (Vercel) + API (Render)
+# ปล่อยอัตโนมัติเมื่อ main ผ่าน CI → deploy ขึ้น Vercel (เว็บ + API ในโดเมนเดียว)
 # ตั้งค่า secrets ที่ Settings → Secrets and variables → Actions
 
 on:
@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-web:
-    name: 🚀 Deploy web (Vercel)
+  deploy:
+    name: 🚀 Deploy (Vercel)
     runs-on: ubuntu-latest
     needs:
       - verify
@@ -35,17 +35,6 @@ jobs:
       - name: Deploy
         run: npx vercel deploy --prebuilt --prod --token "${{ secrets.VERCEL_TOKEN }}" || echo "ปรับ VERCEL_ORG_ID / VERCEL_PROJECT_ID ถ้าจำเป็น"
 
-
-  deploy-api:
-    name: 🚀 Deploy API (Render)
-    runs-on: ubuntu-latest
-    needs:
-      - verify
-    if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
-    steps:
-      - name: Trigger Render deploy hook
-        run: curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
-
   verify:
     name: ✅ Re-run smoke test
     runs-on: ubuntu-latest
@@ -55,7 +44,6 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
-      - run: npm --prefix server ci
       - run: npm --prefix client ci
       - run: npm run typecheck
       - run: npm run test:unit

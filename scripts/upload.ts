@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+/** ใช้ตอน dev ในเครื่องเท่านั้น — บน Vercel (serverless) เขียนไฟล์ไม่ได้ */
 const dir = path.resolve(fileURLToPath(new URL('../uploads', import.meta.url)))
 fs.mkdirSync(dir, { recursive: true })
 

@@ -1,6 +1,6 @@
 /**
  * สคริปต์สร้างตารางใน Neon: npm run db:push
- * อ่าน DATABASE_URL จากไฟล์ .env
+ * อ่าน DATABASE_URL จากไฟล์ .env ที่ root
  */
 import 'dotenv/config'
 import { readFile } from 'node:fs/promises'
@@ -14,7 +14,7 @@ if (!url) {
 }
 
 const schema = await readFile(
-  fileURLToPath(new URL('../../sql/schema.sql', import.meta.url)),
+  fileURLToPath(new URL('../api/_lib/sql/schema.sql', import.meta.url)),
   'utf8'
 )
 

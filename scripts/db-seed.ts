@@ -6,8 +6,8 @@
 import 'dotenv/config'
 import bcrypt from 'bcryptjs'
 import { neon } from '@neondatabase/serverless'
-import { CATEGORIES } from '../data/categories.js'
-import { DEMO_ITEMS, DEMO_USERS } from '../data/demo.js'
+import { CATEGORIES } from '../api/_lib/data/categories.js'
+import { DEMO_ITEMS, DEMO_USERS } from '../api/_lib/data/demo.js'
 
 const url = process.env.DATABASE_URL
 if (!url) {

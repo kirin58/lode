@@ -57,8 +57,7 @@ UI แนว Gen-Z: gradient สด ๆ, glassmorphism, ฟอนต์ Outfit +
 ### 1. ติดตั้ง
 
 ```bash
-npm install                 # root
-npm --prefix server install
+npm install                 # root (รวม backend แล้ว)
 npm --prefix client install
 ```
 
@@ -68,10 +67,10 @@ npm --prefix client install
 2. สร้าง database ชื่ออะไรก็ได้ เช่น `lostfound`
 3. ไปที่ **Connection Details** → คัดลอก **Pooled connection string** (หรือ Direct) จะได้ค่าลักษณะ
    `postgresql://user:pass@ep-xxx.ap-southeast-1.aws.neon.tech/lostfound?sslmode=require`
-4. สร้างไฟล์ `server/.env`
+4. สร้างไฟล์ `.env` ที่ root
 
 ```bash
-cp server/.env.example server/.env     # Windows: copy server\.env.example server\.env
+cp .env.example .env     # Windows: copy .env.example .env
 ```
 
 ```env
@@ -87,7 +86,7 @@ npm run db:push     # สร้าง schema (19 statements)
 npm run db:seed     # ใส่หมวดหมู่ 9 + บัญชีเดโม 8 คน + ประกาศ 18 รายการ
 ```
 
-> หรือเปิดไฟล์ [`server/sql/schema.sql`](server/sql/schema.sql) ไปวางใน **Neon SQL Editor** แล้วกด Run ก็ได้
+> หรือเปิดไฟล์ [`api/_lib/sql/schema.sql`](api/_lib/sql/schema.sql) ไปวางใน **Neon SQL Editor** แล้วกด Run ก็ได้
 
 > 💡 ถ้าขีดเกิด `gen_random_uuid()` ให้รัน `create extension if not exists pgcrypto;` ก่อนหนึ่งครั้ง (Neon 18 ใช้ได้เลย)
 
@@ -158,7 +157,7 @@ npm --prefix client run test:watch    # โหมด watch
 **ครอบคลุม:**
 | ไฟล์ | สิ่งที่ทดสอบ |
 | --- | --- |
-| `server/src/db/store.test.ts` | สร้าง/ค้น/กรองประกาศ, กันขอซ้ำ, อนุมัติ→คืนสำเร็จ+แต้ม, ปฏิเสธ→เปิดกลับ, สิทธิ์เจ้าของ, watchlist แจ้งเตือนตรงเงื่อนไข, review ครั้งเดียว, chat access, admin overview |
+| `api/_lib/db/store.test.ts` | สร้าง/ค้น/กรองประกาศ, กันขอซ้ำ, อนุมัติ→คืนสำเร็จ+แต้ม, ปฏิเสธ→เปิดกลับ, สิทธิ์เจ้าของ, watchlist แจ้งเตือนตรงเงื่อนไข, review ครั้งเดียว, chat access, admin overview |
 | `client/src/lib/format.test.ts` | `timeAgo` เลขไทย (เมื่อกี้/นาที/ชั่วโมง/วัน/สัปดาห์), `formatDate`, `baht`, meta ของสถานะ/ประเภท/หมวด |
 | `client/src/stores/stores.test.ts` | items store (query string, filter, reset), auth store (login/register/401+404 ล้าง session/logout), toast store (fake timers), extras store (watchlist, chat 403) |
 
@@ -344,8 +343,8 @@ npm run test   # unit + e2e ครบ
 ## 🧠 หมายเหตุ
 
 - **Demo mode**: ถ้าไม่ตั้ง `DATABASE_URL` เซิร์ฟเวอร์จะใช้ข้อมูลใน memory พร้อมข้อมูลตัวอย่าง 18 ประกาศ + บัญชีเดโม 8 คน (รหัสผ่าน `demo1234`) ข้อมูลจะหายเมื่อรีสตาร์ท — ใช้ดู UI เท่านั้น
-- **Neon**: ตั้ง `DATABASE_URL` ใน `server/.env` แล้วรัน `npm run db:push && npm run db:seed` เพื่อสร้างตาราง + ข้อมูลตัวอย่าง (idempotent รันซ้ำได้)
-- **รูปภาพ** เก็บเป็นไฟล์ใน `server/uploads/` เสิร์ฟที่ `/uploads/*` (ถ้าต้องการเก็บลง Neon S3 / S3 ให้เปลี่ยน `src/upload.ts` — มี credential ของ Neon S3 ใน `.env` ให้พร้อม)
+- **Neon**: ตั้ง `DATABASE_URL` ใน `.env` (ที่ root) แล้วรัน `npm run db:push && npm run db:seed` เพื่อสร้างตาราง + ข้อมูลตัวอย่าง (idempotent รันซ้ำได้)
+- **รูปภาพ** เก็บเป็นไฟล์ใน `uploads/` เสิร์ฟที่ `/uploads/*` (เฉพาะตอน dev ในเครื่อง — ถ้าต้องการเก็บลง Neon S3 / S3 ให้เปลี่ยน `scripts/upload.ts`)
 - **รหัสผ่าน** เก็บเป็น bcrypt hash, token เป็น JWT 7 วัน เก็บใน `localStorage`
 - ตัวเลขในหน้าแรกนับจาก `/api/items/stats` จริง
 

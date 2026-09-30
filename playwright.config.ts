@@ -39,7 +39,7 @@ export default defineConfig({
   webServer: [
     {
       // API สำหรับเทสต์ (port ของตัวเอง ไม่ชนกับของผู้ใช้)
-      command: 'npm --prefix server run dev',
+      command: 'npm run dev:server',
       url: `${API_URL}/api/health`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

@@ -12,7 +12,7 @@ export default function globalSetup() {
   }
   console.log('🎬 E2E: seed ข้อมูลลง Neon…')
   try {
-    const out = execFileSync('npm', ['--prefix', 'server', 'run', 'db:seed'], {
+    const out = execFileSync('npm', ['run', 'db:seed'], {
       encoding: 'utf8',
       stdio: 'pipe',
       shell: process.platform === 'win32',

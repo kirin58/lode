@@ -1,10 +1,10 @@
 /**
  * Vercel Serverless Function — จุดเดียวที่ให้บริการ API ทั้งหมดบน Vercel
- * จับทุก /api/* แล้วส่งต่อไปที่ตรรกะกลางใน server/src/api.ts
- * (โค้ดชุดเดียวกับที่ Express ในเครื่องใช้)
+ * จับทุก /api/* แล้วส่งต่อไปที่ตรรกะกลางใน ./_lib/api.ts
+ * (ไฟล์ใน _lib/ ไม่ถูกเสิร์ฟเป็น route แต่ถูก bundle เข้ากับ function นี้)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleRequest, type ReqCtx } from '../server/src/api'
+import { handleRequest, type ReqCtx } from './_lib/api.js'
 
 async function readBody(req: VercelRequest): Promise<any> {
   if (req.body !== undefined && req.body !== null) return req.body

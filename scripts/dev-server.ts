@@ -1,14 +1,13 @@
 /**
- * Express adapter — ใช้ตอน dev ในเครื่องเท่านั้น (npm run dev)
- * บน Vercel ใช้ api/[[...path]].ts แทน (โค้วง logic เดียวกัน)
+ * Dev server ในเครื่อง (Express) — ใช้ตอน `npm run dev` เท่านั้น
+ * บน Vercel ใช้ api/[[...path]].ts แทน (logic ชุดเดียวกันใน api/_lib/api.ts)
  */
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { getStore } from './db/index.js'
-import { handleRequest, type ReqCtx } from './api.js'
+import { getStore } from '../api/_lib/db/index.js'
+import { handleRequest, type ReqCtx } from '../api/_lib/api.js'
 import { upload } from './upload.js'
 
 const app = express()
@@ -16,7 +15,7 @@ const PORT = Number(process.env.PORT ?? 8787)
 
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.json({ limit: '4mb' }))
-app.use('/uploads', express.static(path.resolve(fileURLToPath(new URL('../uploads', import.meta.url)))))
+app.use('/uploads', express.static(path.resolve('uploads')))
 
 /** จับทุกคำขอ /api/* แล้วส่งต่อไปที่ตรรกะกลาง */
 app.all(/^\/api(\/.*)?$/, upload.single('image'), async (req, res) => {

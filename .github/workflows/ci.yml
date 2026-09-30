@@ -11,12 +11,12 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # ไม่ใส่ DATABASE_URL ใน CI → เซิร์ฟเวอร์จะใช้ demo mode (memory)
+  # ไม่ใส่ DATABASE_URL ใน CI → API จะใช้ demo mode (memory)
   NODE_VERSION: '22'
 
 jobs:
   # ─────────────────────────────────────────────
-  # 1) ตรวจคุณภาพโค้ด: typecheck ทั้ง server และ client
+  # 1) ตรวจคุณภาพโค้ด: typecheck ทั้ง api และ client
   # ─────────────────────────────────────────────
   typecheck:
     name: 🔍 Typecheck
@@ -29,14 +29,10 @@ jobs:
           cache: npm
       - name: Install (root)
         run: npm ci
-      - name: Install (server + client)
-        run: |
-          npm --prefix server ci
-          npm --prefix client ci
-      - name: Typecheck server
-        run: npm --prefix server run typecheck
-      - name: Typecheck client
-        run: npm --prefix client run typecheck
+      - name: Install (client)
+        run: npm --prefix client ci
+      - name: Typecheck
+        run: npm run typecheck
 
   # ─────────────────────────────────────────────
   # 2) Unit tests (Vitest)
@@ -51,15 +47,12 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm --prefix server ci
       - run: npm --prefix client ci
-      - name: Server unit tests
-        run: npm --prefix server run test
-      - name: Client unit tests
-        run: npm --prefix client run test
+      - name: Unit tests (api + client)
+        run: npm run test:unit
 
   # ─────────────────────────────────────────────
-  # 3) Build ทั้งสองฝั่ง
+  # 3) Build ฝั่งเว็บ
   # ─────────────────────────────────────────────
   build:
     name: 📦 Build
@@ -72,17 +65,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm --prefix server ci
       - run: npm --prefix client ci
-      - name: Build server + client
+      - name: Build client
         run: npm run build
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: |
-            client/dist
-            server/dist
+          path: client/dist
           retention-days: 7
 
   # ─────────────────────────────────────────────
@@ -100,7 +90,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm --prefix server ci
       - run: npm --prefix client ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -128,17 +117,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm --prefix server ci
+      - run: npm ci
       - name: Apply schema to Neon (dry branch)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npm --prefix server run db:push
+        run: npm run db:push
       - name: Health check
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ci-secret
         run: |
-          npm --prefix server run start &
+          npm run dev:server &
           for i in $(seq 1 30); do
             if curl -sf http://localhost:8787/api/health; then
               echo ""
