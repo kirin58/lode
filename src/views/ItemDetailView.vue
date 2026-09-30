@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useIntervalFn, useDocumentVisibility } from '@vueuse/core'
 import ItemCard from '@/components/ItemCard.vue'
 import ChatPanel from '@/components/ChatPanel.vue'
 import ReviewModal from '@/components/ReviewModal.vue'
@@ -66,6 +67,12 @@ const reviewOpen = ref(false)
 
 async function load() {
   loading.value = true
+  await poll()
+  loading.value = false
+}
+
+async function poll() {
+  if (visibility.value !== 'visible' && loading.value === false) return
   try {
     const res = await api.get<{ item: Item; has_claimed: boolean }>(`/items/${route.params.id}`)
     item.value = res.item
@@ -81,10 +88,12 @@ async function load() {
   } catch {
     toast.error('หาไม่เจอประกาศนี้', 'อาจถูกลบไปแล้ว หรือลิงก์ผิดพลาด')
     router.push('/browse')
-  } finally {
-    loading.value = false
   }
 }
+
+const visibility = useDocumentVisibility()
+useIntervalFn(poll, 4000)
+watch(visibility, (v) => { if (v === 'visible' && !loading.value) poll() })
 
 function openChat() {
   if (!item.value) return
