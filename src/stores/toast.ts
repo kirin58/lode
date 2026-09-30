@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import Swal from 'sweetalert2'
 
 export interface Toast {
   id: number
@@ -10,44 +9,19 @@ export interface Toast {
   emoji?: string
 }
 
-export const useToastStore = defineStore('toast', () => {
-  const ToastMixin = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3500,
-    timerProgressBar: true,
-    customClass: {
-      popup: 'glass border-line !rounded-2xl shadow-xl',
-      title: 'font-display !text-title !text-base',
-      timerProgressBar: '!bg-bubble-500',
-    },
-    background: 'var(--color-paper)',
-    color: 'var(--color-title)',
-    didOpen: (toast) => {
-      toast.addEventListener('mouseenter', Swal.stopTimer)
-      toast.addEventListener('mouseleave', Swal.resumeTimer)
-    }
-  })
+let seq = 0
 
-  // To not break existing components that might read toasts.length
+export const useToastStore = defineStore('toast', () => {
   const toasts = ref<Toast[]>([])
 
-  function push(input: Omit<Toast, 'id'>, ttl = 3500) {
-    let icon: 'success' | 'error' | 'info' | 'warning' | 'question' = 'info'
-    if (input.tone === 'success' || input.tone === 'party') icon = 'success'
-    if (input.tone === 'error') icon = 'error'
-
-    ToastMixin.fire({
-      icon,
-      title: input.title,
-      text: input.body,
-      timer: ttl,
-    })
+  function push(input: Omit<Toast, 'id'>, ttl = 4200) {
+    const id = ++seq
+    toasts.value.push({ id, ...input })
+    setTimeout(() => dismiss(id), ttl)
   }
 
-  function dismiss(_id?: number) {
-    Swal.close()
+  function dismiss(id: number) {
+    toasts.value = toasts.value.filter((t) => t.id !== id)
   }
 
   const success = (title: string, body?: string, emoji = '✅') =>

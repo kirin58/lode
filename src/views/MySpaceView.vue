@@ -10,7 +10,7 @@ import { useSocialStore } from '@/stores/social'
 import { useToastStore } from '@/stores/toast'
 import { STATUS_META, timeAgo } from '@/lib/format'
 import type { Item, ItemStatus } from '@/types'
-import Swal from 'sweetalert2'
+import { confirmPop } from '@/lib/confirm'
 
 const route = useRoute()
 const router = useRouter()
@@ -63,24 +63,12 @@ async function setStatus(item: Item, status: ItemStatus) {
 }
 
 async function remove(item: Item) {
-  const result = await Swal.fire({
+  const confirmed = await confirmPop({
     title: `ลบ “${item.title}” ใช่ไหม?`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'ลบเลย',
-    cancelButtonText: 'ยกเลิก',
-    buttonsStyling: false,
-    background: 'var(--color-paper)',
-    color: 'var(--color-title)',
-    customClass: {
-      popup: 'glass border-line !rounded-[2.5rem]',
-      title: 'font-display text-2xl',
-      htmlContainer: 'text-muted-1',
-      confirmButton: 'btn btn-primary !rounded-full !bg-red-500 hover:!bg-red-600 !px-8 !py-3 mx-2',
-      cancelButton: 'btn btn-outline border-line !rounded-full text-muted-1 !px-8 !py-3 mx-2',
-    },
+    danger: true,
+    confirmText: 'ลบเลย'
   })
-  if (!result.isConfirmed) return
+  if (!confirmed) return
   try {
     await api.del(`/items/${item.id}`)
     myItems.value = myItems.value.filter((i) => i.id !== item.id)
