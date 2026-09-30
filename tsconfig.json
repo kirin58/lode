@@ -13,5 +13,9 @@
     // ใน isolated context แล้วหา type entry ไม่เจอ (TS2688) จน function หลุดจาก deploy
     // ค่า default ของ TS จะ include @types/* ให้เองอยู่แล้ว
   },
-  "include": ["api/**/*.ts", "scripts/**/*.ts"]
+  "include": ["api/**/*.ts", "scripts/**/*.ts"],
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.app.json" }
+  ]
 }
