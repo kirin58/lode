@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { api, ApiError } from '@/lib/api'
@@ -10,6 +10,7 @@ import { useSocialStore } from '@/stores/social'
 import { useToastStore } from '@/stores/toast'
 import { STATUS_META, timeAgo } from '@/lib/format'
 import type { Item, ItemStatus } from '@/types'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,7 +63,15 @@ async function setStatus(item: Item, status: ItemStatus) {
 }
 
 async function remove(item: Item) {
-  if (!confirm(`ลบ “${item.title}” ใช่ไหม?`)) return
+  const result = await Swal.fire({
+    title: `ลบ “${item.title}” ใช่ไหม?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'ลบเลย',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#ef4444',
+  })
+  if (!result.isConfirmed) return
   try {
     await api.del(`/items/${item.id}`)
     myItems.value = myItems.value.filter((i) => i.id !== item.id)

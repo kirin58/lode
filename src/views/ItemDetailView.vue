@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ItemCard from '@/components/ItemCard.vue'
@@ -12,6 +12,7 @@ import { useExtrasStore } from '@/stores/extras'
 import { useToastStore } from '@/stores/toast'
 import { KIND_META, STATUS_META, CATEGORY_CHIP, timeAgo, formatDate, baht } from '@/lib/format'
 import type { Claim, Item } from '@/types'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
@@ -135,7 +136,16 @@ async function markReturned() {
 
 async function remove() {
   if (!item.value) return
-  if (!confirm('ลบประกาศนี้ใช่ไหม? กู้คืนไม่ได้นะ')) return
+  const result = await Swal.fire({
+    title: 'ลบประกาศนี้ใช่ไหม?',
+    text: 'กู้คืนไม่ได้นะ',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'ลบเลย',
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonColor: '#ef4444',
+  })
+  if (!result.isConfirmed) return
   try {
     await api.del(`/items/${item.value.id}`)
     toast.info('ลบประกาศแล้ว', 'ขอบคุณที่ดูแลบอร์ดนะ 👋')
