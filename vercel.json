@@ -3,8 +3,6 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  // หมายเหตุ: ไม่ใส่ rewrites สำหรับ SPA fallback — Framework Preset (Vite)
-  // จัดการให้เองแบบ function-aware ถ้าใส่ /(.*) เองจะบัง /api/* แล้ว POST จะโดนตอบ 405
   "headers": [
     {
       "source": "/assets/(.*)",
