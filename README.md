@@ -57,9 +57,10 @@ UI แนว Gen-Z: gradient สด ๆ, glassmorphism, ฟอนต์ Outfit +
 ### 1. ติดตั้ง
 
 ```bash
-npm install                 # root (รวม backend แล้ว)
-npm --prefix client install
+npm install
 ```
+
+### 2. (สำคัญ) ตั้งค่า Neon
 
 ### 2. (สำคัญ) ตั้งค่า Neon
 
@@ -248,11 +249,23 @@ npm run test   # unit + e2e ครบ
 
 ```
 .
-├── package.json              # deps backend + scripts ทั้งหมด (dev/test/db)
+├── package.json              # ตัวเดียว! deps + scripts ทั้งหมด
+├── vite.config.ts            # build เว็บ (alias @ → ./src)
+├── tsconfig.app.json         # typecheck ฝั่งเว็บ (vue-tsc)
+├── tsconfig.node.json        # typecheck ไฟล์ config
 ├── tsconfig.json + vitest.config.ts  # typecheck + unit test ฝั่ง api
 ├── playwright.config.ts      # E2E (chromium + mobile) + webServer
 ├── vercel.json               # deploy เว็บ + API พร้อมกัน (ครั้งเดียว)
+├── index.html                # entry ของเว็บ
 ├── .env / .env.example       # DATABASE_URL (Neon) + JWT_SECRET
+├── src/                      # frontend ทั้งหมด (Vue 3 + Tailwind)
+│   ├── style.css             # Tailwind v4 theme, keyframes, utility
+│   ├── types.ts              # type ฝั่ง client
+│   ├── lib/                  # api.ts (fetch wrapper + VITE_API_URL), format.ts (เวลาไทย/สถานะ)
+│   ├── stores/               # auth, items, social, toast, extras (watchlist/chat/review), theme, health
+│   ├── components/           # AppHeader, MobileTabBar, ItemCard, ChatPanel, ReviewModal, RepBadge, ApiOfflineBanner, Toaster, ...
+│   └── views/                # Landing, Home, ItemDetail, Report, MySpace, Watch, Admin, Profile, Login, Register, NotFound
+├── public/favicon.svg        # ไฟล์ static (Vite เสิร์ฟให้เอง)
 ├── api/[...path].ts          # 🚀 Vercel Serverless Function — จับทุก /api/*
 ├── api/_lib/                 # backend ทั้งหมด (ไฟล์ใต้ _ ไม่ถูกเสิร์ฟเป็น route)
 │   ├── api.ts                # ⭐ ตรรกะ API ทั้งหมด ใช้ร่วมกันทั้ง Vercel + dev
@@ -265,15 +278,6 @@ npm run test   # unit + e2e ครบ
 ├── uploads/                  # รูปที่อัปโหลดตอน dev (gitignored เหลือแค่ .gitkeep)
 ├── .github/workflows/ci.yml  # CI: typecheck → unit → build → E2E → Neon check
 └── tests/e2e/                # Playwright specs + fixtures + global-setup
-
-└── client/
-    └── src/
-        ├── style.css         # Tailwind v4 theme, keyframes, utility
-        ├── types.ts          # type ฝั่ง client
-        ├── lib/              # api.ts (fetch wrapper + VITE_API_URL), format.ts (เวลาไทย/สถานะ)
-        ├── stores/           # auth, items, social, toast, extras (watchlist/chat/review), theme, health
-        ├── components/       # AppHeader, MobileTabBar, ItemCard, ChatPanel, ReviewModal, RepBadge, ApiOfflineBanner, Toaster, ...
-        └── views/            # Landing, Home, ItemDetail, Report, MySpace, Watch, Admin, Profile, Login, Register, NotFound
 ```
 
 ---

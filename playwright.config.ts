@@ -49,7 +49,7 @@ export default defineConfig({
     },
     {
       // เว็บสำหรับเทสต์ (proxy ไปยัง API port 8788)
-      command: `npm --prefix client run dev -- --port ${WEB_PORT} --strictPort`,
+      command: `npm run dev:client -- --port ${WEB_PORT} --strictPort`,
       url: WEB_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

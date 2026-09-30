@@ -29,8 +29,6 @@ jobs:
           cache: npm
       - name: Install (root)
         run: npm ci
-      - name: Install (client)
-        run: npm --prefix client ci
       - name: Typecheck
         run: npm run typecheck
 
@@ -47,7 +45,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm --prefix client ci
       - name: Unit tests (api + client)
         run: npm run test:unit
 
@@ -65,14 +62,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm --prefix client ci
       - name: Build client
         run: npm run build
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: client/dist
+          path: dist
           retention-days: 7
 
   # ─────────────────────────────────────────────
@@ -90,7 +86,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm --prefix client ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: Run E2E
