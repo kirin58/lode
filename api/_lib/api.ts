@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { z } from 'zod'
 import { getStore } from './db/index.js'
+import { keyForUpload, presignPut, getImage as fetchImage, s3Enabled, validKey } from './s3.js'
 import type { ClaimStatus, ItemStatus, User } from './types.js'
 
 // ───────────────────────────────────────────────────────────
@@ -27,6 +28,8 @@ export interface ReqCtx {
 export interface HandlerResult {
   status: number
   body: any
+  /** ตั้งเมื่อตอบเป็น binary (เช่น รูปจาก S3) — adapter จะส่งเป็นไฟล์แทน JSON */
+  contentType?: string
 }
 
 const ok = (body: any, status = 200): HandlerResult => ({ status, body })
@@ -34,9 +37,18 @@ const fail = (error: string, status = 400): HandlerResult => ({ status, body: { 
 
 const SECRET = process.env.JWT_SECRET ?? 'lost-and-found-dev-secret'
 
-/** serverless ไม่มี multer → ปิดการอัปโหลดรูป (client จะซ่อนตัวเลือกนี้ให้อัตโนมัติ) */
+/** serverless ไม่มี multer → ปิดการอัปโหลดรูปแบบไฟล์ (client จะซ่อนตัวเลือกนี้ให้อัตโนมัติ) */
 export const UPLOADS_ENABLED =
   String(process.env.DISABLE_UPLOADS ?? '') !== '1' && String(process.env.VERCEL ?? '') !== '1'
+
+export type UploadMode = 's3' | 'local' | false
+
+/** s3 = อัปโหลดผ่าน Neon S3 (ใช้ได้ทุกที่) · local = ผ่าน Express ตอน dev · false = ปิด */
+export function uploadMode(): UploadMode {
+  if (s3Enabled()) return 's3'
+  if (String(process.env.VERCEL ?? '') === '1') return false
+  return 'local'
+}
 
 // ───────────────────────────────────────────────────────────
 //  helpers
@@ -80,7 +92,13 @@ function requireAdmin(ctx: ReqCtx): HandlerResult | null {
 //  🩺 health
 // ───────────────────────────────────────────────────────────
 async function health(): Promise<HandlerResult> {
-  return ok({ ok: true, driver: getStore().driver, uploads: UPLOADS_ENABLED })
+  const mode = uploadMode()
+  return ok({
+    ok: true,
+    driver: getStore().driver,
+    uploads: mode !== false,
+    uploadMode: mode,
+  })
 }
 
 // ───────────────────────────────────────────────────────────
@@ -200,12 +218,18 @@ async function createItem(ctx: ReqCtx): Promise<HandlerResult> {
       occurred_at: z.string().max(20).nullable().optional(),
       contact_line: z.string().max(120).default(''),
       reward: z.coerce.number().int().min(0).max(100000).default(0),
+      // ใช้ตอนอัปโหลดผ่าน S3 (client PUT ไฟล์เองแล้วส่ง key กลับมา)
+      image_url: z.string().max(500).nullable().optional(),
     })
     .safeParse(ctx.body)
   if (!parsed.success) return fail(parsed.error.issues[0].message)
 
   const store = getStore()
   const meUser = await store.findUserById(auth.sub)
+  // รูปจากไฟล์แนบ (local) หรือจาก S3 (client อัปโหลดเองแล้ว)
+  // รับเฉพาะ URL รูปของเราเอง กันการยัดลิงก์ภายนอก
+  const s3url = parsed.data.image_url ?? ''
+  const s3key = s3url.startsWith('/api/images/') ? s3url.slice('/api/images/'.length) : ''
   const item = await store.createItem({
     kind: parsed.data.kind,
     title: parsed.data.title,
@@ -215,7 +239,11 @@ async function createItem(ctx: ReqCtx): Promise<HandlerResult> {
     occurred_at: parsed.data.occurred_at || null,
     contact_name: meUser?.display_name ?? '',
     contact_line: parsed.data.contact_line || meUser?.email || '',
-    image_url: ctx.file ? `/uploads/${ctx.file.originalname}` : null,
+    image_url: ctx.file
+      ? `/uploads/${ctx.file.originalname}`
+      : s3key && validKey(s3key)
+        ? `/api/images/${s3key}`
+        : null,
     reward: parsed.data.reward,
     owner_id: auth.sub,
   })
@@ -418,6 +446,36 @@ async function sendMessage(ctx: ReqCtx, itemId: string): Promise<HandlerResult> 
 }
 
 // ───────────────────────────────────────────────────────────
+//  🖼️ อัปโหลดรูป (Neon S3 presigned URL + proxy ดูรูป)
+// ───────────────────────────────────────────────────────────
+async function presignUpload(ctx: ReqCtx): Promise<HandlerResult> {
+  const auth = requireAuth(ctx)
+  if (!auth) return fail('กรุณาเข้าสู่ระบบก่อนนะ 👀', 401)
+  if (!s3Enabled())
+    return fail('ยังไม่เปิดใช้งานอัปโหลดรูป (ตั้งค่า S3 บนเซิร์ฟเวอร์ก่อนนะ)', 503)
+
+  const parsed = z
+    .object({
+      contentType: z.string().min(1, 'ต้องระบุชนิดไฟล์'),
+      size: z.coerce.number().int().min(1).max(4 * 1024 * 1024),
+    })
+    .safeParse(ctx.body ?? {})
+  if (!parsed.success) return fail(parsed.error.issues[0].message)
+
+  const key = keyForUpload(parsed.data.contentType)
+  if (!key) return fail('อัปโหลดได้แค่รูป JPG/PNG/WebP/GIF ไม่เกิน 4 MB นะ')
+  const result = await presignPut(key, parsed.data.contentType, parsed.data.size)
+  if (!result) return fail('เตรียมอัปโหลดไม่สำเร็จ ลองใหม่อีกครั้งนะ')
+  return ok({ ...result, imageUrl: `/api/images/${result.key}` })
+}
+
+async function serveImage(_ctx: ReqCtx, key: string): Promise<HandlerResult> {
+  const img = await fetchImage(key)
+  if (!img) return fail('ไม่พบรูปนี้', 404)
+  return { status: 200, body: img.body, contentType: img.contentType }
+}
+
+// ───────────────────────────────────────────────────────────
 //  🧭 router
 // ───────────────────────────────────────────────────────────
 export async function handleRequest(ctx: ReqCtx): Promise<HandlerResult> {
@@ -497,6 +555,13 @@ export async function handleRequest(ctx: ReqCtx): Promise<HandlerResult> {
 
   // ── /api/reviews
   if (resource === 'reviews' && method === 'POST') return createReview(ctx)
+
+  // ── /api/uploads/presign — ขอ presigned URL อัปโหลดรูปไป S3
+  if (resource === 'uploads' && id === 'presign' && method === 'POST')
+    return presignUpload(ctx)
+
+  // ── /api/images/:key — ดูรูป (proxy จาก S3 ไม่ต้องเปิด bucket เป็น public)
+  if (resource === 'images' && id && method === 'GET') return serveImage(ctx, id)
 
   // ── /api/admin/overview
   if (resource === 'admin' && id === 'overview') {

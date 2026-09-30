@@ -52,6 +52,13 @@ app.all(/^\/api(\/.*)?$/, upload.single('image'), async (req, res) => {
         : undefined,
     }
     const result = await handleRequest(ctx)
+    // ถ้าเป็น binary (รูปจาก S3) ส่งเป็นไฟล์แทน JSON
+    if (result.contentType && Buffer.isBuffer(result.body)) {
+      res.set('Content-Type', result.contentType)
+      res.set('Cache-Control', 'public, max-age=31536000, immutable')
+      res.status(result.status).send(result.body)
+      return
+    }
     res.status(result.status).json(result.body)
   } catch (err: any) {
     console.error('[api]', err)

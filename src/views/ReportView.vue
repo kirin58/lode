@@ -71,18 +71,50 @@ async function submit() {
   }
   submitting.value = true
   try {
-    const fd = new FormData()
-    fd.append('kind', kind.value)
-    fd.append('title', title.value.trim())
-    fd.append('description', description.value.trim())
-    fd.append('category_id', category.value)
-    fd.append('location', location.value.trim())
-    fd.append('occurred_at', occurredAt.value)
-    fd.append('contact_line', contact.value.trim())
-    fd.append('reward', String(reward.value))
-    if (file.value) fd.append('image', file.value)
+    // โหมด s3 (Neon S3 — ใช้ได้ทั้ง local และ Vercel): ขอ presigned URL แล้ว PUT ไฟล์ตรง
+    let imageUrl: string | null = null
+    if (health.uploadMode === 's3' && file.value) {
+      const presign = await api.post<{ uploadUrl: string; key: string; imageUrl: string }>(
+        '/uploads/presign',
+        { contentType: file.value.type, size: file.value.size }
+      )
+      const put = await fetch(presign.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.value.type },
+        body: file.value,
+      })
+      if (!put.ok) throw new Error('อัปโหลดรูปไม่สำเร็จ ลองใหม่อีกครั้งนะ')
+      imageUrl = presign.imageUrl
+    }
 
-    const res = await api.post<{ item: { id: string } }>('/items', fd)
+    // โหมด local (Express ตอน dev): ส่ง multipart พร้อมรูปแนบไปเลย
+    const isMultipart = health.uploadMode !== 's3'
+    let res: { item: { id: string } }
+    if (isMultipart) {
+      const fd = new FormData()
+      fd.append('kind', kind.value)
+      fd.append('title', title.value.trim())
+      fd.append('description', description.value.trim())
+      fd.append('category_id', category.value)
+      fd.append('location', location.value.trim())
+      fd.append('occurred_at', occurredAt.value)
+      fd.append('contact_line', contact.value.trim())
+      fd.append('reward', String(reward.value))
+      if (file.value) fd.append('image', file.value)
+      res = await api.post<{ item: { id: string } }>('/items', fd)
+    } else {
+      res = await api.post<{ item: { id: string } }>('/items', {
+        kind: kind.value,
+        title: title.value.trim(),
+        description: description.value.trim(),
+        category_id: category.value || null,
+        location: location.value.trim(),
+        occurred_at: occurredAt.value,
+        contact_line: contact.value.trim(),
+        reward: reward.value,
+        image_url: imageUrl,
+      })
+    }
     toast.party(
       kind.value === 'found' ? 'ลงประกาศเรียบร้อย! 🎉' : 'โพสต์หาของเรียบร้อย! 🙋',
       'ตอนนี้ทุกคนในมหาลักษณ์จะเห็นแล้วนะ',

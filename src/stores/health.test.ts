@@ -20,14 +20,28 @@ describe('health store (แถบแจ้ง API ล่ม)', () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ ok: true, driver: 'neon' }),
+      json: async () => ({ ok: true, driver: 'neon', uploads: true, uploadMode: 's3' }),
     })
     const health = useHealthStore()
     await health.check()
     expect(health.online).toBe(true)
     expect(health.offline).toBe(false)
     expect(health.driver).toBe('neon')
+    expect(health.uploadMode).toBe('s3')
+    expect(health.uploads).toBe(true)
     expect(fetchMock).toHaveBeenCalledWith('/api/health', expect.anything())
+  })
+
+  it('ปิดอัปโหลดเมื่อ server บอกว่าไม่รองรับ', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, driver: 'neon', uploads: false, uploadMode: false }),
+    })
+    const health = useHealthStore()
+    await health.check()
+    expect(health.uploads).toBe(false)
+    expect(health.uploadMode).toBe(false)
   })
 
   it('ออฟไลน์เมื่อ fetch พัง (เช่น API ไม่ได้รัน)', async () => {

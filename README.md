@@ -78,14 +78,24 @@ cp .env.example .env     # Windows: copy .env.example .env
 DATABASE_URL=postgresql://USER:PASSWORD@ep-xxxx.ap-southeast-1.aws.neon.tech/lostfound?sslmode=require
 JWT_SECRET=สตริงสุ่มยาว ๆ สัก 32 ตัวอักษร
 PORT=8787
+
+# อัปโหลดรูปผ่าน Neon S3 (ไม่บังคับ — ไม่มี = ใช้วิธี local ตอน dev / ปิดตอน deploy)
+#AWS_ENDPOINT_URL_S3=https://xxx.storage.c-4.ap-southeast-1.aws.neon.tech
+#AWS_ACCESS_KEY_ID=nak_live_...
+#AWS_SECRET_ACCESS_KEY=nsk_live_...
+#AWS_REGION=ap-southeast-1
+#S3_BUCKET=ชื่อ-bucket-ใน-Neon-Storage
 ```
 
 5. **สร้างตาราง + ข้อมูลตัวอย่าง** (ปลอดภัย รันซ้ำได้)
 
 ```bash
-npm run db:push     # สร้าง schema (19 statements)
-npm run db:seed     # ใส่หมวดหมู่ 9 + บัญชีเดโม 8 คน + ประกาศ 18 รายการ
+npm run db:push     # สร้าง schema
+npm run db:seed     # ใส่หมวดหมู่ 9 + บัญชีเดโม + ประกาศตัวอย่าง (เฉพาะตอนเริ่ม)
 ```
+
+> 🧹 ล้างข้อมูลทดสอบทีหลัง: `npx tsx scripts/db-clean.ts` (dry-run) แล้ว
+> `npx tsx scripts/db-clean.ts --confirm` (ลบจริง) — เหลือไว้เฉพาะโพสต์ของคนจริง
 
 > หรือเปิดไฟล์ [`api/_lib/sql/schema.sql`](api/_lib/sql/schema.sql) ไปวางใน **Neon SQL Editor** แล้วกด Run ก็ได้
 
@@ -274,7 +284,7 @@ npm run test   # unit + e2e ครบ
 │   ├── data/                 # หมวดหมู่ 9 หมวด + ข้อมูล demo
 │   ├── db/                   # เลือก driver (neon | memory) + SQL + store.test.ts
 │   └── sql/schema.sql        # DDL ทั้ง 8 ตาราง
-├── scripts/                  # dev-server (Express) + db-push + db-seed + check
+├── scripts/                  # dev-server (Express) + db-push + db-seed + db-clean + check
 ├── uploads/                  # รูปที่อัปโหลดตอน dev (gitignored เหลือแค่ .gitkeep)
 ├── .github/workflows/ci.yml  # CI: typecheck → unit → build → E2E → Neon check
 └── tests/e2e/                # Playwright specs + fixtures + global-setup
@@ -294,7 +304,10 @@ npm run test   # unit + e2e ครบ
 | GET | `/api/items/categories` | – | หมวดหมู่ทั้งหมด |
 | GET | `/api/items/stats` | – | สถิติหน้าแรก |
 | GET | `/api/items/:id` | – | รายละเอียด + `has_claimed` |
-| POST | `/api/items` | ✅ | ลงประกาศ (multipart ถ้ามีรูป) |
+| POST | `/api/items` | ✅ | ลงประกาศ (multipart ตอน dev / JSON + `image_url` ตอน S3) |
+| GET | `/api/uploads/presign` | — | (ไม่มี — ใช้ POST) |
+| POST | `/api/uploads/presign` | ✅ | ขอ presigned URL อัปโหลดรูปไป S3 (ต้องตั้งค่า S3 ก่อน) |
+| GET | `/api/images/:key` | – | ดูรูป (proxy จาก S3 ไม่ต้องเปิด bucket เป็น public) |
 | PATCH | `/api/items/:id` | ✅ | แก้ไข/เปลี่ยนสถานะ (เจ้าของเท่านั้น) |
 | DELETE | `/api/items/:id` | ✅ | ลบประกาศ |
 | GET | `/api/claims/mine` | ✅ | สิ่งที่ฉันไปขอรับ |

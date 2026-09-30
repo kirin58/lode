@@ -8,6 +8,8 @@ export const useHealthStore = defineStore('health', () => {
   const driver = ref<string | null>(null)
   /** serverless (Vercel) ไม่รองรับการเขียนไฟล์ → client จะซ่อนตัวเลือกอัปโหลดรูป */
   const uploads = ref(true)
+  /** s3 = อัปโหลดผ่าน Neon S3 (ใช้ได้ทุกที่) · local = ผ่าน Express ตอน dev · false = ปิด */
+  const uploadMode = ref<'s3' | 'local' | false>('local')
   const lastChecked = ref<number | null>(null)
   let timer: ReturnType<typeof setInterval> | undefined
 
@@ -21,6 +23,10 @@ export const useHealthStore = defineStore('health', () => {
       const data = await res.json()
       driver.value = data.driver ?? null
       if (typeof data.uploads === 'boolean') uploads.value = data.uploads
+      if (data.uploadMode === 's3' || data.uploadMode === 'local' || data.uploadMode === false) {
+        uploadMode.value = data.uploadMode
+        uploads.value = data.uploadMode !== false
+      }
       online.value = true
     } catch {
       online.value = false
@@ -45,6 +51,6 @@ export const useHealthStore = defineStore('health', () => {
     timer = undefined
   }
 
-  return { online, offline, checking, driver, uploads, lastChecked, check, start, stop }
+  return { online, offline, checking, driver, uploads, uploadMode, lastChecked, check, start, stop }
 })
 
