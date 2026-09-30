@@ -39,8 +39,14 @@ const canChat = computed(
 )
 const canReview = computed(() => {
   if (!item.value || item.value.status !== 'returned' || !auth.isAuthed) return false
-  if (isOwner.value) return Boolean(approvedClaim.value)
-  return myClaim.value?.status === 'approved'
+  // ให้สิทธิ์เฉพาะคนที่ทำของหาย (คนที่ไปรับของ) เป็นคนรีวิวคนที่เก็บได้เท่านั้น
+  if (item.value.kind === 'lost') {
+    // ถ้าประกาศเป็น "ของหาย" เจ้าของประกาศคือคนที่ทำหาย -> มีสิทธิ์รีวิวคนมาช่วย (claimant)
+    return isOwner.value && Boolean(approvedClaim.value)
+  } else {
+    // ถ้าประกาศเป็น "เจอของ" คนที่มากดเคลมคือคนที่ทำหาย -> มีสิทธิ์รีวิวเจ้าของประกาศ
+    return myClaim.value?.status === 'approved'
+  }
 })
 const reviewTarget = computed(() => {
   if (!item.value) return null
