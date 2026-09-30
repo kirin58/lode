@@ -143,7 +143,16 @@ async function remove() {
     showCancelButton: true,
     confirmButtonText: 'ลบเลย',
     cancelButtonText: 'ยกเลิก',
-    confirmButtonColor: '#ef4444',
+    buttonsStyling: false,
+    background: 'var(--color-paper)',
+    color: 'var(--color-title)',
+    customClass: {
+      popup: 'glass border-line !rounded-[2.5rem]',
+      title: 'font-display text-2xl',
+      htmlContainer: 'text-muted-1',
+      confirmButton: 'btn btn-primary !rounded-full !bg-red-500 hover:!bg-red-600 !px-8 !py-3 mx-2',
+      cancelButton: 'btn btn-outline border-line !rounded-full text-muted-1 !px-8 !py-3 mx-2',
+    },
   })
   if (!result.isConfirmed) return
   try {

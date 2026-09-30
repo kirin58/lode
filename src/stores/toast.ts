@@ -18,9 +18,12 @@ export const useToastStore = defineStore('toast', () => {
     timer: 3500,
     timerProgressBar: true,
     customClass: {
-      popup: '!rounded-2xl',
-      title: '!font-display',
+      popup: 'glass border-line !rounded-2xl shadow-xl',
+      title: 'font-display !text-title !text-base',
+      timerProgressBar: '!bg-bubble-500',
     },
+    background: 'var(--color-paper)',
+    color: 'var(--color-title)',
     didOpen: (toast) => {
       toast.addEventListener('mouseenter', Swal.stopTimer)
       toast.addEventListener('mouseleave', Swal.resumeTimer)
