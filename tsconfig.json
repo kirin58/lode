@@ -12,6 +12,6 @@
     // หมายเหตุ: อย่าใส่ "types": ["node"] — เคยทำให้ Vercel bundling พัง (TS2688)
     // ค่า default ของ TS จะ include @types/* ให้เองอยู่แล้ว
   },
-  "include": ["functions/**/*.ts", "scripts/**/*.ts"],
-  "exclude": ["node_modules", "functions/node_modules", "functions/lib"]
+  "include": ["api/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules"]
 }
