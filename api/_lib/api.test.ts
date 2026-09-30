@@ -47,27 +47,23 @@ describe('API core (handleRequest)', () => {
     expect(r.body.ok).toBe(true)
     expect(['neon', 'memory']).toContain(r.body.driver)
     expect(typeof r.body.uploads).toBe('boolean')
-    expect(['s3', 'local', false]).toContain(r.body.uploadMode)
+    expect(['cloudinary', 'local', false]).toContain(r.body.uploadMode)
   })
 
-  it('อัปโหลดรูป: ต้อง login และต้องเปิด S3 ก่อน', async () => {
+  it('อัปโหลดรูป: ต้อง login และต้องเปิด Cloudinary ก่อน', async () => {
     // ยังไม่ login → 401
     expect(
-      (await call('POST', '/api/uploads/presign', { body: { contentType: 'image/jpeg', size: 100 } })).status
+      (await call('POST', '/api/uploads/sign', { body: { contentType: 'image/jpeg', size: 100 } })).status
     ).toBe(401)
-    // login แล้วแต่เทสต์นี้ไม่มี S3 env → 503 พร้อมข้อความชัด
-    const r = await call('POST', '/api/uploads/presign', {
+    // login แล้วแต่เทสต์นี้ไม่มี Cloudinary env → 503 พร้อมข้อความชัด
+    const r = await call('POST', '/api/uploads/sign', {
       token: user.token,
       body: { contentType: 'image/jpeg', size: 100 },
     })
     expect(r.status).toBe(503)
-    expect(r.body.error).toContain('S3')
+    expect(r.body.error).toContain('Cloudinary')
   })
 
-  it('ดูรูป: key ไม่ถูกฟอร์แมต → 404', async () => {
-    expect((await call('GET', '/api/images/..%2Fsecret')).status).toBe(404)
-    expect((await call('GET', '/api/images/')).status).toBe(404)
-  })
 
   it('register → บัญชีแรกเป็นแอดมิน', async () => {
     expect(user.id).toBeTruthy()

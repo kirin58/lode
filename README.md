@@ -79,12 +79,12 @@ DATABASE_URL=postgresql://USER:PASSWORD@ep-xxxx.ap-southeast-1.aws.neon.tech/los
 JWT_SECRET=สตริงสุ่มยาว ๆ สัก 32 ตัวอักษร
 PORT=8787
 
-# อัปโหลดรูปผ่าน Neon S3 (ไม่บังคับ — ไม่มี = ใช้วิธี local ตอน dev / ปิดตอน deploy)
-#AWS_ENDPOINT_URL_S3=https://xxx.storage.c-4.ap-southeast-1.aws.neon.tech
-#AWS_ACCESS_KEY_ID=nak_live_...
-#AWS_SECRET_ACCESS_KEY=nsk_live_...
-#AWS_REGION=ap-southeast-1
-#S3_BUCKET=ชื่อ-bucket-ใน-Neon-Storage
+# ===== Cloudinary (อัปโหลดรูป — ใช้ได้ทั้ง local และ Vercel) =====
+# ไปที่ cloudinary.com -> Dashboard -> Settings -> Access Keys
+#CLOUDINARY_CLOUD_NAME=mycloudname
+#CLOUDINARY_API_KEY=123456789
+#CLOUDINARY_API_SECRET=mysecret
+#CLOUDINARY_FOLDER=lostfound
 ```
 
 5. **สร้างตาราง + ข้อมูลตัวอย่าง** (ปลอดภัย รันซ้ำได้)
@@ -242,7 +242,7 @@ vercel --prod   # หรือ npm run deploy
 | --- | --- |
 | Vercel account | [vercel.com](https://vercel.com) → Sign up (ฟรี) |
 | เชื่อม GitHub repo | Dashboard → Import Git Repository → เลือก repo |
-| Environment Variables | Dashboard → Settings → Environment Variables → เพิ่ม `DATABASE_URL`, `JWT_SECRET` (+ `AWS_*`/`S3_BUCKET` ถ้าเปิดอัปโหลดรูป) |
+| Environment Variables | Dashboard → Settings → Environment Variables → เพิ่ม `DATABASE_URL`, `JWT_SECRET` (+ `CLOUDINARY_*` ถ้าเปิดอัปโหลดรูป) |
 
 `vercel.json` ที่ root จัดการให้อัตโนมัติ: build เว็บไป `dist`, rewrite `/api/*` → serverless function, ที่เหลือ fallback `index.html` (SPA)
 
@@ -281,7 +281,7 @@ vercel --prod   # หรือ npm run deploy
 │       ├── api.ts            # handleRequest + routes ทั้งหมด
 │       ├── api.test.ts       # unit test ของ API core
 │       ├── handler.ts        # Vercel adapter (แปลง req/res → ReqCtx)
-│       ├── s3.ts             # อัปโหลดรูปผ่าน Neon S3
+│       ├── cloudinary.ts     # อัปโหลดรูปผ่าน Cloudinary
 │       ├── types.ts          # type กลาง + interface Store
 │       ├── data/             # หมวดหมู่ 9 หมวด + ข้อมูล demo
 │       ├── db/               # เลือก driver (neon | memory) + SQL + store.test.ts
@@ -306,10 +306,8 @@ vercel --prod   # หรือ npm run deploy
 | GET | `/api/items/categories` | – | หมวดหมู่ทั้งหมด |
 | GET | `/api/items/stats` | – | สถิติหน้าแรก |
 | GET | `/api/items/:id` | – | รายละเอียด + `has_claimed` |
-| POST | `/api/items` | ✅ | ลงประกาศ (multipart ตอน dev / JSON + `image_url` ตอน S3) |
-| GET | `/api/uploads/presign` | — | (ไม่มี — ใช้ POST) |
-| POST | `/api/uploads/presign` | ✅ | ขอ presigned URL อัปโหลดรูปไป S3 (ต้องตั้งค่า S3 ก่อน) |
-| GET | `/api/images/:key` | – | ดูรูป (proxy จาก S3 ไม่ต้องเปิด bucket เป็น public) |
+| POST | `/api/items` | ✅ | ลงประกาศ (multipart ตอน dev / JSON + `image_url` ตอนใช้ Cloudinary) |
+| POST | `/api/uploads/sign` | ✅ | ขอ signature อัปโหลดรูปไป Cloudinary (ต้องตั้งค่า Cloudinary ก่อน) |
 | PATCH | `/api/items/:id` | ✅ | แก้ไข/เปลี่ยนสถานะ (เจ้าของเท่านั้น) |
 | DELETE | `/api/items/:id` | ✅ | ลบประกาศ |
 | GET | `/api/claims/mine` | ✅ | สิ่งที่ฉันไปขอรับ |

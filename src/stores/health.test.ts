@@ -20,14 +20,14 @@ describe('health store (แถบแจ้ง API ล่ม)', () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({ ok: true, driver: 'neon', uploads: true, uploadMode: 's3' }),
+      json: async () => ({ ok: true, driver: 'neon', uploads: true, uploadMode: 'cloudinary' }),
     })
     const health = useHealthStore()
     await health.check()
     expect(health.online).toBe(true)
     expect(health.offline).toBe(false)
     expect(health.driver).toBe('neon')
-    expect(health.uploadMode).toBe('s3')
+    expect(health.uploadMode).toBe('cloudinary')
     expect(health.uploads).toBe(true)
     expect(fetchMock).toHaveBeenCalledWith('/api/health', expect.anything())
   })

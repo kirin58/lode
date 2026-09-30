@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiError } from '@/lib/api'
@@ -71,24 +71,35 @@ async function submit() {
   }
   submitting.value = true
   try {
-    // โหมด s3 (Neon S3 — ใช้ได้ทั้ง local และ Vercel): ขอ presigned URL แล้ว PUT ไฟล์ตรง
+    // โหมด cloudinary: ขอ signature แล้ว POST ไฟล์ตรงไปที่ Cloudinary
     let imageUrl: string | null = null
-    if (health.uploadMode === 's3' && file.value) {
-      const presign = await api.post<{ uploadUrl: string; key: string; imageUrl: string }>(
-        '/uploads/presign',
-        { contentType: file.value.type, size: file.value.size }
-      )
-      const put = await fetch(presign.uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.value.type },
-        body: file.value,
+    if (health.uploadMode === 'cloudinary' && file.value) {
+      const sign = await api.post<{
+        uploadUrl: string
+        signature: string
+        timestamp: number
+        apiKey: string
+        folder: string
+      }>('/uploads/sign', { contentType: file.value.type, size: file.value.size })
+
+      const fd = new FormData()
+      fd.append('file', file.value)
+      fd.append('api_key', sign.apiKey)
+      fd.append('timestamp', String(sign.timestamp))
+      fd.append('signature', sign.signature)
+      fd.append('folder', sign.folder)
+
+      const put = await fetch(sign.uploadUrl, {
+        method: 'POST',
+        body: fd,
       })
       if (!put.ok) throw new Error('อัปโหลดรูปไม่สำเร็จ ลองใหม่อีกครั้งนะ')
-      imageUrl = presign.imageUrl
+      const out = await put.json()
+      imageUrl = out.secure_url
     }
 
     // โหมด local (Express ตอน dev): ส่ง multipart พร้อมรูปแนบไปเลย
-    const isMultipart = health.uploadMode !== 's3'
+    const isMultipart = health.uploadMode !== 'cloudinary'
     let res: { item: { id: string } }
     if (isMultipart) {
       const fd = new FormData()

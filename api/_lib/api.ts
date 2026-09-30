@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { z } from 'zod'
 import { getStore } from './db/index.js'
-import { keyForUpload, presignPut, getImage as fetchImage, s3Enabled, validKey } from './s3.js'
+import { cloudinaryEnabled, signUpload as cloudinarySign, isCloudinaryUrl, validateUpload } from './cloudinary.js'
 import type { ClaimStatus, ItemStatus, User } from './types.js'
 
 // ───────────────────────────────────────────────────────────
@@ -41,11 +41,11 @@ const SECRET = process.env.JWT_SECRET ?? 'lost-and-found-dev-secret'
 export const UPLOADS_ENABLED =
   String(process.env.DISABLE_UPLOADS ?? '') !== '1' && String(process.env.VERCEL ?? '') !== '1'
 
-export type UploadMode = 's3' | 'local' | false
+export type UploadMode = 'cloudinary' | 'local' | false
 
-/** s3 = อัปโหลดผ่าน Neon S3 (ใช้ได้ทุกที่) · local = ผ่าน Express ตอน dev · false = ปิด */
+/** cloudinary = อัปโหลดผ่าน Cloudinary CDN (ใช้ได้ทุกที่) · local = ผ่าน Express ตอน dev · false = ปิด */
 export function uploadMode(): UploadMode {
-  if (s3Enabled()) return 's3'
+  if (cloudinaryEnabled()) return 'cloudinary'
   if (String(process.env.VERCEL ?? '') === '1') return false
   return 'local'
 }
@@ -218,7 +218,7 @@ async function createItem(ctx: ReqCtx): Promise<HandlerResult> {
       occurred_at: z.string().max(20).nullable().optional(),
       contact_line: z.string().max(120).default(''),
       reward: z.coerce.number().int().min(0).max(100000).default(0),
-      // ใช้ตอนอัปโหลดผ่าน S3 (client PUT ไฟล์เองแล้วส่ง key กลับมา)
+      // URL ของรูปจาก Cloudinary (client อัปโหลดเองแล้วส่ง URL กลับมา)
       image_url: z.string().max(500).nullable().optional(),
     })
     .safeParse(ctx.body)
@@ -226,10 +226,9 @@ async function createItem(ctx: ReqCtx): Promise<HandlerResult> {
 
   const store = getStore()
   const meUser = await store.findUserById(auth.sub)
-  // รูปจากไฟล์แนบ (local) หรือจาก S3 (client อัปโหลดเองแล้ว)
-  // รับเฉพาะ URL รูปของเราเอง กันการยัดลิงก์ภายนอก
-  const s3url = parsed.data.image_url ?? ''
-  const s3key = s3url.startsWith('/api/images/') ? s3url.slice('/api/images/'.length) : ''
+  // รูปจากไฟล์แนบ (local) หรือจาก Cloudinary (client อัปโหลดเองแล้ว)
+  // รับเฉพาะ URL จาก Cloudinary เท่านั้น กันการยัดลิงก์ภายนอก
+  const imgUrl = parsed.data.image_url ?? ''
   const item = await store.createItem({
     kind: parsed.data.kind,
     title: parsed.data.title,
@@ -241,8 +240,8 @@ async function createItem(ctx: ReqCtx): Promise<HandlerResult> {
     contact_line: parsed.data.contact_line || meUser?.email || '',
     image_url: ctx.file
       ? `/uploads/${ctx.file.originalname}`
-      : s3key && validKey(s3key)
-        ? `/api/images/${s3key}`
+      : imgUrl && isCloudinaryUrl(imgUrl)
+        ? imgUrl
         : null,
     reward: parsed.data.reward,
     owner_id: auth.sub,
@@ -446,13 +445,13 @@ async function sendMessage(ctx: ReqCtx, itemId: string): Promise<HandlerResult> 
 }
 
 // ───────────────────────────────────────────────────────────
-//  🖼️ อัปโหลดรูป (Neon S3 presigned URL + proxy ดูรูป)
+//  🖼️ อัปโหลดรูป (Cloudinary signed upload)
 // ───────────────────────────────────────────────────────────
-async function presignUpload(ctx: ReqCtx): Promise<HandlerResult> {
+async function signUploadHandler(ctx: ReqCtx): Promise<HandlerResult> {
   const auth = requireAuth(ctx)
   if (!auth) return fail('กรุณาเข้าสู่ระบบก่อนนะ 👀', 401)
-  if (!s3Enabled())
-    return fail('ยังไม่เปิดใช้งานอัปโหลดรูป (ตั้งค่า S3 บนเซิร์ฟเวอร์ก่อนนะ)', 503)
+  if (!cloudinaryEnabled())
+    return fail('ยังไม่เปิดใช้งานอัปโหลดรูป (ตั้งค่า Cloudinary บนเซิร์ฟเวอร์ก่อนนะ)', 503)
 
   const parsed = z
     .object({
@@ -462,17 +461,10 @@ async function presignUpload(ctx: ReqCtx): Promise<HandlerResult> {
     .safeParse(ctx.body ?? {})
   if (!parsed.success) return fail(parsed.error.issues[0].message)
 
-  const key = keyForUpload(parsed.data.contentType)
-  if (!key) return fail('อัปโหลดได้แค่รูป JPG/PNG/WebP/GIF ไม่เกิน 4 MB นะ')
-  const result = await presignPut(key, parsed.data.contentType, parsed.data.size)
-  if (!result) return fail('เตรียมอัปโหลดไม่สำเร็จ ลองใหม่อีกครั้งนะ')
-  return ok({ ...result, imageUrl: `/api/images/${result.key}` })
-}
+  const err = validateUpload(parsed.data.contentType, parsed.data.size)
+  if (err) return fail(err)
 
-async function serveImage(_ctx: ReqCtx, key: string): Promise<HandlerResult> {
-  const img = await fetchImage(key)
-  if (!img) return fail('ไม่พบรูปนี้', 404)
-  return { status: 200, body: img.body, contentType: img.contentType }
+  return ok(cloudinarySign())
 }
 
 // ───────────────────────────────────────────────────────────
@@ -556,12 +548,9 @@ export async function handleRequest(ctx: ReqCtx): Promise<HandlerResult> {
   // ── /api/reviews
   if (resource === 'reviews' && method === 'POST') return createReview(ctx)
 
-  // ── /api/uploads/presign — ขอ presigned URL อัปโหลดรูปไป S3
-  if (resource === 'uploads' && id === 'presign' && method === 'POST')
-    return presignUpload(ctx)
-
-  // ── /api/images/:key — ดูรูป (proxy จาก S3 ไม่ต้องเปิด bucket เป็น public)
-  if (resource === 'images' && id && method === 'GET') return serveImage(ctx, id)
+  // ── /api/uploads/sign — ขอ signature อัปโหลดรูปไป Cloudinary
+  if (resource === 'uploads' && id === 'sign' && method === 'POST')
+    return signUploadHandler(ctx)
 
   // ── /api/admin/overview
   if (resource === 'admin' && id === 'overview') {
